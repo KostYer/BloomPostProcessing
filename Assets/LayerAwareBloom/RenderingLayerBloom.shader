@@ -1,4 +1,4 @@
-Shader "Hidden/LayerAwareBloom/Silhouette"
+Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
 {
     SubShader
     {
@@ -40,7 +40,7 @@ Shader "Hidden/LayerAwareBloom/Silhouette"
 
         Pass
         {
-            Name "Visible Silhouette"
+            Name "Visible Rendering Layer Mask"
             ZWrite Off
             ZTest Equal
             Cull Back
@@ -92,7 +92,7 @@ Shader "Hidden/LayerAwareBloom/Silhouette"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            float _SilhouetteBloomPreview;
+            float _PreviewUsesBloomEncoding;
 
             half4 FragPreview(Varyings input) : SV_Target
             {
@@ -100,7 +100,7 @@ Shader "Hidden/LayerAwareBloom/Silhouette"
                 half mask = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord).r;
                 #if UNITY_COLORSPACE_GAMMA
                     // URP encodes its bloom pyramid with sqrt in gamma projects.
-                    if (_SilhouetteBloomPreview > 0.5)
+                    if (_PreviewUsesBloomEncoding > 0.5)
                         mask *= mask;
                 #endif
                 return half4(mask, mask, mask, 1);

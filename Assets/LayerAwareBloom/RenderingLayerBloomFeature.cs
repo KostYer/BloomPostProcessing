@@ -4,26 +4,29 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Serialization;
 
 namespace LayerAwareBloom
 {
-    // Visible-surface mask and URP Gaussian bloom blur, displayed as a grayscale silhouette.
-    public sealed class RenderingLayerSilhouetteFeature : ScriptableRendererFeature
+    // Visible-surface mask and URP Gaussian bloom blur, displayed as a grayscale mask.
+    public sealed class RenderingLayerBloomFeature : ScriptableRendererFeature
     {
         [SerializeField] private RenderingLayerMask renderingLayers = 1;
         [SerializeField, HideInInspector] private bool showFullscreen;
-        [SerializeField] private Shader silhouetteShader;
-        [SerializeField] private bool blurSilhouette = true;
+        [FormerlySerializedAs("silhouetteShader")]
+        [SerializeField] private Shader bloomShader;
+        [FormerlySerializedAs("blurSilhouette")]
+        [SerializeField] private bool blurMask = true;
         [SerializeField, Range(0, 1)] private float scatter = 0.7f;
         [SerializeField, Range(2, 8)] private int maxIterations = 6;
         [SerializeField] private BloomDownscaleMode downscale = BloomDownscaleMode.Half;
         [SerializeField] private bool highQualityFiltering;
 
-        private Material material;
-        private Material bloomMaterial;
-        private Material bloomMaterialHQ;
-        private SilhouettePass silhouettePass;
-        private PreviewPass previewPass;
+        private Material maskMaterial;
+        private Material blurMaterial;
+        private Material highQualityBlurMaterial;
+        private BloomMaskPass bloomMaskPass;
+        private FullscreenPreviewPass fullscreenPreviewPass;
 
         public RenderingLayerMask RenderingLayers
         {
@@ -39,61 +42,61 @@ namespace LayerAwareBloom
 
         public override void Create()
         {
-            CoreUtils.Destroy(material);
-            CoreUtils.Destroy(bloomMaterial);
-            CoreUtils.Destroy(bloomMaterialHQ);
-            if (silhouetteShader == null)
-                silhouetteShader = Shader.Find("Hidden/LayerAwareBloom/Silhouette");
-            material = silhouetteShader != null ? CoreUtils.CreateEngineMaterial(silhouetteShader) : null;
-            bloomMaterial = silhouetteShader != null ? CoreUtils.CreateEngineMaterial(silhouetteShader) : null;
-            bloomMaterialHQ = silhouetteShader != null ? CoreUtils.CreateEngineMaterial(silhouetteShader) : null;
-            if (bloomMaterial != null)
+            CoreUtils.Destroy(maskMaterial);
+            CoreUtils.Destroy(blurMaterial);
+            CoreUtils.Destroy(highQualityBlurMaterial);
+            if (bloomShader == null)
+                bloomShader = Shader.Find("Hidden/LayerAwareBloom/RenderingLayerBloom");
+            maskMaterial = bloomShader != null ? CoreUtils.CreateEngineMaterial(bloomShader) : null;
+            blurMaterial = bloomShader != null ? CoreUtils.CreateEngineMaterial(bloomShader) : null;
+            highQualityBlurMaterial = bloomShader != null ? CoreUtils.CreateEngineMaterial(bloomShader) : null;
+            if (blurMaterial != null)
             {
                 // Separate immutable variants avoid changing keywords between recorded draws.
-                bloomMaterial.SetFloat("_SilhouetteBloomPreview", 1);
-                bloomMaterialHQ.SetFloat("_SilhouetteBloomPreview", 1);
-                bloomMaterialHQ.EnableKeyword("_BLOOM_HQ");
+                blurMaterial.SetFloat("_PreviewUsesBloomEncoding", 1);
+                highQualityBlurMaterial.SetFloat("_PreviewUsesBloomEncoding", 1);
+                highQualityBlurMaterial.EnableKeyword("_BLOOM_HQ");
             }
-            silhouettePass = new SilhouettePass { renderPassEvent = RenderPassEvent.AfterRenderingOpaques };
-            previewPass = new PreviewPass { renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing };
+            bloomMaskPass = new BloomMaskPass { renderPassEvent = RenderPassEvent.AfterRenderingOpaques };
+            fullscreenPreviewPass = new FullscreenPreviewPass { renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing };
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             var cameraData = renderingData.cameraData;
-            if (material == null || cameraData.renderType != CameraRenderType.Base ||
+            if (maskMaterial == null || cameraData.renderType != CameraRenderType.Base ||
                 (cameraData.cameraType != CameraType.Game && cameraData.cameraType != CameraType.SceneView))
                 return;
 
-            var filterMaterial = highQualityFiltering ? bloomMaterialHQ : bloomMaterial;
-            silhouettePass.Setup(material, renderingLayers, blurSilhouette ? filterMaterial : null,
+            var filterMaterial = highQualityFiltering ? highQualityBlurMaterial : blurMaterial;
+            bloomMaskPass.Setup(maskMaterial, renderingLayers, blurMask ? filterMaterial : null,
                 scatter, maxIterations, downscale);
-            renderer.EnqueuePass(silhouettePass);
+            renderer.EnqueuePass(bloomMaskPass);
             if (showFullscreen)
             {
-                previewPass.Setup(blurSilhouette ? filterMaterial : material);
-                renderer.EnqueuePass(previewPass);
+                fullscreenPreviewPass.Setup(blurMask ? filterMaterial : maskMaterial);
+                renderer.EnqueuePass(fullscreenPreviewPass);
             }
         }
 
         protected override void Dispose(bool disposing)
         {
-            CoreUtils.Destroy(material);
-            CoreUtils.Destroy(bloomMaterial);
-            CoreUtils.Destroy(bloomMaterialHQ);
-            material = null;
-            bloomMaterial = null;
-            bloomMaterialHQ = null;
+            CoreUtils.Destroy(maskMaterial);
+            CoreUtils.Destroy(blurMaterial);
+            CoreUtils.Destroy(highQualityBlurMaterial);
+            maskMaterial = null;
+            blurMaterial = null;
+            highQualityBlurMaterial = null;
         }
 
         // Handles are shared only within this camera's current graph, never across frames.
-        public sealed class SilhouetteFrameData : ContextItem
+        public sealed class BloomFrameData : ContextItem
         {
             public TextureHandle texture;
             public override void Reset() => texture = TextureHandle.nullHandle;
         }
 
-        private sealed class SilhouettePass : ScriptableRenderPass
+        private sealed class BloomMaskPass : ScriptableRenderPass
         {
             private static readonly List<ShaderTagId> ShaderTags = new()
             {
@@ -103,8 +106,8 @@ namespace LayerAwareBloom
                 new ShaderTagId("UniversalGBuffer")
             };
 
-            private const int MaxLevels = 8;
-            // Shader passes 0/1 draw the silhouette and preview. These four contain the URP Gaussian filters in Silhouette.shader.
+            private const int MaxPyramidLevels = 8;
+            // Shader passes 0/1 draw the mask and preview. These four contain the URP Gaussian filters in RenderingLayerBloom.shader.
             private const int Prefilter = 2, BlurHorizontal = 3, BlurVertical = 4, Upsample = 5;
             private static readonly int BlitTexture = Shader.PropertyToID("_BlitTexture");
             private static readonly int BlitTexelSize = Shader.PropertyToID("_BlitTexture_TexelSize");
@@ -113,14 +116,14 @@ namespace LayerAwareBloom
             private static readonly int LowMipTexelSize = Shader.PropertyToID("_SourceTexLowMip_TexelSize");
             private static readonly int Parameters = Shader.PropertyToID("_Params");
 
-            private readonly TextureHandle[] down = new TextureHandle[MaxLevels];
-            private readonly TextureHandle[] up = new TextureHandle[MaxLevels];
+            private readonly TextureHandle[] downsamplePyramid = new TextureHandle[MaxPyramidLevels];
+            private readonly TextureHandle[] upsamplePyramid = new TextureHandle[MaxPyramidLevels];
             private Material filterMaterial;
             private float scatter;
             private int maxIterations;
             private BloomDownscaleMode downscale;
 
-            private Material material;
+            private Material maskMaterial;
             private uint renderingLayerMask;
 
             private sealed class PassData
@@ -141,11 +144,11 @@ namespace LayerAwareBloom
             public void Setup(Material maskMaterial, uint layerMask, Material blurMaterial,
                 float scatterValue, int iterations, BloomDownscaleMode scale)
             {
-                material = maskMaterial;
+                this.maskMaterial = maskMaterial;
                 renderingLayerMask = layerMask;
                 filterMaterial = blurMaterial;
                 scatter = Mathf.Clamp01(scatterValue);
-                maxIterations = Mathf.Clamp(iterations, 2, MaxLevels);
+                maxIterations = Mathf.Clamp(iterations, 2, MaxPyramidLevels);
                 downscale = scale;
             }
 
@@ -158,7 +161,7 @@ namespace LayerAwareBloom
 
                 // Match depth dimensions and sample count so the attachments are compatible.
                 var descriptor = renderGraph.GetTextureDesc(resources.activeDepthTexture);
-                descriptor.name = "Rendering Layer Silhouette (BW)";
+                descriptor.name = "Rendering Layer Bloom Mask (BW)";
                 descriptor.format = GraphicsFormat.R8G8B8A8_UNorm;
                 descriptor.isShadowMap = false;
                 descriptor.bindTextureMS = false;
@@ -166,19 +169,19 @@ namespace LayerAwareBloom
                 descriptor.clearColor = Color.black;
                 descriptor.filterMode = FilterMode.Point;
                 var mask = renderGraph.CreateTexture(descriptor);
-                var silhouette = frameData.Create<SilhouetteFrameData>();
-                silhouette.texture = mask;
+                var bloomFrameData = frameData.Create<BloomFrameData>();
+                bloomFrameData.texture = mask;
 
                 var drawing = RenderingUtils.CreateDrawingSettings(
                     ShaderTags, rendering, camera, lights, camera.defaultOpaqueSortFlags);
-                drawing.overrideMaterial = material;
+                drawing.overrideMaterial = maskMaterial;
                 drawing.overrideMaterialPassIndex = 0;
                 var filtering = new FilteringSettings(RenderQueueRange.opaque, -1, renderingLayerMask);
                 var rendererList = renderGraph.CreateRendererList(
                     new RendererListParams(rendering.cullResults, drawing, filtering));
 
                 using (var builder = renderGraph.AddRasterRenderPass<PassData>(
-                    "Rendering Layer Silhouette", out var data))
+                    "Rendering Layer Bloom Mask", out var data))
                 {
                     data.rendererList = rendererList;
                     builder.UseRendererList(rendererList);
@@ -191,12 +194,12 @@ namespace LayerAwareBloom
                 }
 
                 // After closing the mask builder, record the downsample/upsample passes.
-                // PreviewPass reads whichever texture this existing frame-data item holds.
+                // FullscreenPreviewPass reads whichever texture the frame-data item holds.
                 if (filterMaterial != null)
-                    silhouette.texture = RecordBlur(renderGraph, mask);
+                    bloomFrameData.texture = RecordBloomPyramid(renderGraph, mask);
             }
 
-            private TextureHandle RecordBlur(RenderGraph renderGraph, TextureHandle source)
+            private TextureHandle RecordBloomPyramid(RenderGraph renderGraph, TextureHandle source)
             {
                 var descriptor = renderGraph.GetTextureDesc(source);
                 int shift = downscale == BloomDownscaleMode.Quarter ? 2 : 1;
@@ -221,10 +224,10 @@ namespace LayerAwareBloom
                 {
                     descriptor.width = width;
                     descriptor.height = height;
-                    descriptor.name = $"Silhouette Bloom Down {i}";
-                    down[i] = renderGraph.CreateTexture(descriptor);
-                    descriptor.name = $"Silhouette Bloom Up {i}";
-                    up[i] = renderGraph.CreateTexture(descriptor);
+                    descriptor.name = $"Rendering Layer Bloom Down {i}";
+                    downsamplePyramid[i] = renderGraph.CreateTexture(descriptor);
+                    descriptor.name = $"Rendering Layer Bloom Up {i}";
+                    upsamplePyramid[i] = renderGraph.CreateTexture(descriptor);
                     width = Mathf.Max(1, width >> 1);
                     height = Mathf.Max(1, height >> 1);
                 }
@@ -232,25 +235,25 @@ namespace LayerAwareBloom
                 // Threshold/knee zero: the BW source is already selected, so do not discard its white pixels.
                 // Scatter remapping is the same as URP's Gaussian bloom.
                 var parameters = new Vector4(Mathf.Lerp(0.05f, 0.95f, scatter), 65472f, 0, 0);
-                RecordFilter(renderGraph, "Silhouette Bloom Prefilter", source, down[0], Prefilter, parameters);
+                RecordFilterPass(renderGraph, "Rendering Layer Bloom Prefilter", source, downsamplePyramid[0], Prefilter, parameters);
                 for (int i = 1; i < levels; i++)
                 {
                     // As in URP: downsample + horizontal Gaussian, then vertical Gaussian at the same size.
-                    RecordFilter(renderGraph, $"Silhouette Bloom Down {i} Horizontal", down[i - 1], up[i], BlurHorizontal, parameters);
-                    RecordFilter(renderGraph, $"Silhouette Bloom Down {i} Vertical", up[i], down[i], BlurVertical, parameters);
+                    RecordFilterPass(renderGraph, $"Rendering Layer Bloom Down {i} Horizontal", downsamplePyramid[i - 1], upsamplePyramid[i], BlurHorizontal, parameters);
+                    RecordFilterPass(renderGraph, $"Rendering Layer Bloom Down {i} Vertical", upsamplePyramid[i], downsamplePyramid[i], BlurVertical, parameters);
                 }
 
-                var result = down[levels - 1];
+                var result = downsamplePyramid[levels - 1];
                 for (int i = levels - 2; i >= 0; i--)
                 {
-                    RecordFilter(renderGraph, $"Silhouette Bloom Up {i}", down[i], up[i], Upsample, parameters, result);
-                    result = up[i];
+                    RecordFilterPass(renderGraph, $"Rendering Layer Bloom Up {i}", downsamplePyramid[i], upsamplePyramid[i], Upsample, parameters, result);
+                    result = upsamplePyramid[i];
                 }
 
                 return result;
             }
 
-            private void RecordFilter(RenderGraph graph, string name, TextureHandle source,TextureHandle destination, int shaderPass, Vector4 parameters, TextureHandle lowMip = default)
+            private void RecordFilterPass(RenderGraph graph, string name, TextureHandle source, TextureHandle destination, int shaderPass, Vector4 parameters, TextureHandle lowMip = default)
             {
                 using var builder = graph.AddRasterRenderPass<PassData>(name, out var data);
                 data.source = source;
@@ -258,23 +261,23 @@ namespace LayerAwareBloom
                 data.material = filterMaterial;
                 data.shaderPass = shaderPass;
                 data.parameters = parameters;
-                data.sourceTexelSize = TexelSize(graph.GetTextureDesc(source));
+                data.sourceTexelSize = CalculateTexelSize(graph.GetTextureDesc(source));
                 builder.UseTexture(source, AccessFlags.Read);
                 if (lowMip.IsValid())
                 {
                     builder.UseTexture(lowMip, AccessFlags.Read);
-                    data.lowMipTexelSize = TexelSize(graph.GetTextureDesc(lowMip));
+                    data.lowMipTexelSize = CalculateTexelSize(graph.GetTextureDesc(lowMip));
                 }
                 builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
                 // This debug feature also keeps its pyramid available in Frame Debugger when preview is hidden.
                 builder.AllowPassCulling(false);
-                builder.SetRenderFunc<PassData>(ExecuteFilter);
+                builder.SetRenderFunc<PassData>(ExecuteFilterPass);
             }
 
-            private static Vector4 TexelSize(TextureDesc descriptor) =>
+            private static Vector4 CalculateTexelSize(TextureDesc descriptor) =>
                 new(1f / descriptor.width, 1f / descriptor.height, descriptor.width, descriptor.height);
 
-            private static void ExecuteFilter(PassData data, RasterGraphContext context)
+            private static void ExecuteFilterPass(PassData data, RasterGraphContext context)
             {
                 var properties = data.properties;
                 properties.Clear();
@@ -296,9 +299,9 @@ namespace LayerAwareBloom
             }
         }
 
-        private sealed class PreviewPass : ScriptableRenderPass
+        private sealed class FullscreenPreviewPass : ScriptableRenderPass
         {
-            private Material material;
+            private Material previewMaterial;
 
             private sealed class PassData
             {
@@ -306,19 +309,19 @@ namespace LayerAwareBloom
                 public Material material;
             }
 
-            public void Setup(Material previewMaterial) => material = previewMaterial;
+            public void Setup(Material previewMaterial) => this.previewMaterial = previewMaterial;
 
             public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
             {
-                var mask = frameData.Get<SilhouetteFrameData>().texture;
+                var mask = frameData.Get<BloomFrameData>().texture;
                 if (!mask.IsValid())
                     return;
 
                 var resources = frameData.Get<UniversalResourceData>();
                 using var builder = renderGraph.AddRasterRenderPass<PassData>(
-                    "Show Silhouette Fullscreen", out var data);
+                    "Rendering Layer Bloom Fullscreen Preview", out var data);
                 data.source = mask;
-                data.material = material;
+                data.material = previewMaterial;
                 builder.UseTexture(mask, AccessFlags.Read);
                 // Only overwrite the camera output; do not sample it or modify scene depth.
                 builder.SetRenderAttachment(resources.activeColorTexture, 0, AccessFlags.Write);

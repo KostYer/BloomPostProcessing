@@ -66,15 +66,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d4bd365924244c4d90d641c589efabec, type: 3}
-  m_Name: Rendering Layer Silhouette
+  m_Name: Rendering Layer Bloom
   m_EditorClassIdentifier: 
   m_Active: 1
   renderingLayers:
     serializedVersion: 0
     m_Bits: 1
   showFullscreen: 1
-  silhouetteShader: {fileID: 4800000, guid: 7bf614eb4e2a4ab3a94f0c558a626850, type: 3}
-  blurSilhouette: 1
+  bloomShader: {fileID: 4800000, guid: 7bf614eb4e2a4ab3a94f0c558a626850, type: 3}
+  blurMask: 1
   scatter: 0.7
   maxIterations: 3
   downscale: 0
