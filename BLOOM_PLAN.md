@@ -1,6 +1,6 @@
 # Layer Aware Bloom — Project Brief and Development Plan
 
-Status: Step 1 implemented: visible opaque Rendering Layer silhouettes in a BW texture, with a fullscreen preview button. Later bloom milestones remain planned. Implementation proceeds one visible milestone at a time.
+Status: visible opaque Rendering Layer silhouettes and a URP Gaussian bloom blur of that mask are implemented, with a fullscreen grayscale preview. Colored HDR source extraction and scene bloom composition remain planned. Implementation proceeds one visible milestone at a time.
 
 ## Goal
 
@@ -186,6 +186,8 @@ Debug views should expose selection, source RGB, and individual group bloom as t
 
 ## Immediate next step
 
-Current user-directed scope is **Step 1: silhouette rendering only**, taking precedence over the earlier milestone order. The feature is attached to `Assets/Settings/PC_Renderer.asset`. Select its Rendering Layers and click **Show BW Fullscreen** to inspect the mask; click **Hide BW Fullscreen** to restore the scene. The mask draws after opaques against scene depth, and the preview draws after post-processing.
+Current user-directed scope is **blurred silhouette debugging**, taking precedence over the earlier milestone order. The feature is attached to `Assets/Settings/PC_Renderer.asset`. Select its Rendering Layers and click **Show BW Fullscreen** to inspect the grayscale result; click **Hide BW Fullscreen** to restore the scene. Disable **Blur Silhouette** to compare the sharp source mask. The mask draws after opaques against scene depth, the blur follows without depth clipping, and the preview draws after post-processing.
 
-Verified in Unity with isolated render/readback checks: visible selection, partial and full occlusion, unselected objects, black background, an empty layer mask, changing the layer mask, and restoring normal rendering. Initial support is standard opaque meshes; custom vertex deformation and broader rendering compatibility remain out of scope. Review this result before implementing bloom.
+The existing `SilhouettePass` in `RenderingLayerSilhouetteFeature.cs` records both the mask and blur. The existing `Silhouette.shader` contains the URP 17.3 Gaussian bloom filter calculations inline: prefilter, horizontal downsample blur, vertical blur, and upsample. Keep the original file, class, and shader names while comparing incremental changes in Git. The blur uses matching resolution/iteration calculations and scatter remapping. Threshold and knee are zero for this mask experiment so white silhouettes contribute directly. Controls are Scatter (default 0.7), Max Iterations (default 6, range 2–8), Half/Quarter Downscale, and High Quality Filtering. The actual level count is resolution-dependent. The HQ prefilter uses 13 samples; that is not 13 pyramid levels. The result remains a grayscale silhouette on black, without scene-color composition.
+
+Verified in Unity with isolated render/readback checks: visible selection, partial and full occlusion, unselected objects, black background, an empty layer mask, changing the layer mask, and restoring normal rendering. Blur verification compared against the original URP shader sequence in both quality modes at iteration limits 2, 6, and 8 (384x192 input), and checked grayscale output, soft edges, spread outside the mask, empty selection, and preview off. Captured red-channel differences were below 0.017 maximum and 0.00081 mean; this is a close numerical comparison, not a bit-identical output claim. Initial support is standard opaque meshes; custom vertex deformation and broader rendering compatibility remain out of scope. Review this result before adding HDR source color or composition.

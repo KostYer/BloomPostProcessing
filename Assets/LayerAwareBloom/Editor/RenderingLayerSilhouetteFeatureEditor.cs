@@ -11,6 +11,16 @@ namespace LayerAwareBloom.Editor
             serializedObject.Update();
             EditorGUILayout.PropertyField(serializedObject.FindProperty("renderingLayers"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("silhouetteShader"));
+            EditorGUILayout.Space();
+            var blur = serializedObject.FindProperty("blurSilhouette");
+            EditorGUILayout.PropertyField(blur);
+            using (new EditorGUI.DisabledScope(!blur.boolValue))
+            {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("scatter"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("maxIterations"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("downscale"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("highQualityFiltering"));
+            }
 
             var fullscreen = serializedObject.FindProperty("showFullscreen");
             EditorGUILayout.Space();
@@ -18,8 +28,9 @@ namespace LayerAwareBloom.Editor
                 fullscreen.boolValue = !fullscreen.boolValue;
 
             EditorGUILayout.HelpBox(
-                "White: visible opaque surfaces in the selected Rendering Layers. Black: everything else. " +
-                "Preview applies to Game and Scene views. Standard opaque meshes only; custom vertex deformation is not supported yet.",
+                "Visible selected surfaces form a white mask. Blur uses URP's Gaussian bloom pyramid and shows a soft grayscale silhouette on black. " +
+                "Disable Blur Silhouette to compare the original mask. Max Iterations limits pyramid levels; HQ uses a 13-sample prefilter and bicubic upsampling. " +
+                "Standard opaque meshes only; custom vertex deformation is not supported yet.",
                 MessageType.Info);
 
             if (serializedObject.ApplyModifiedProperties())

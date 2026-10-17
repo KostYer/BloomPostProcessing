@@ -72,8 +72,13 @@ MonoBehaviour:
   renderingLayers:
     serializedVersion: 0
     m_Bits: 1
-  showFullscreen: 0
+  showFullscreen: 1
   silhouetteShader: {fileID: 4800000, guid: 7bf614eb4e2a4ab3a94f0c558a626850, type: 3}
+  blurSilhouette: 1
+  scatter: 0.7
+  maxIterations: 3
+  downscale: 0
+  highQualityFiltering: 1
 --- !u!114 &7833122117494664109
 MonoBehaviour:
   m_ObjectHideFlags: 0
