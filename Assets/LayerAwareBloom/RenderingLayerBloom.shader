@@ -36,6 +36,21 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
 
             return color;
         }
+
+        TEXTURE2D_X(_LayerBloomTexture0);
+        TEXTURE2D_X(_LayerBloomTexture1);
+        TEXTURE2D_X(_LayerBloomTexture2);
+        float4 _LayerBloomWeight0; // Linear tint RGB multiplied by group intensity.
+        float4 _LayerBloomWeight1;
+        float4 _LayerBloomWeight2;
+
+        half3 CombinedBloom(float2 uv)
+        {
+            half3 a = DecodeHDR(SAMPLE_TEXTURE2D_X(_LayerBloomTexture0, sampler_LinearClamp, uv));
+            half3 b = DecodeHDR(SAMPLE_TEXTURE2D_X(_LayerBloomTexture1, sampler_LinearClamp, uv));
+            half3 c = DecodeHDR(SAMPLE_TEXTURE2D_X(_LayerBloomTexture2, sampler_LinearClamp, uv));
+            return a * _LayerBloomWeight0.rgb + b * _LayerBloomWeight1.rgb + c * _LayerBloomWeight2.rgb;
+        }
         ENDHLSL
 
         Pass
@@ -92,16 +107,15 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            float _PreviewUsesBloomEncoding;
-            float _BloomIntensity;
+            float _PreviewSource;
 
             half4 FragPreview(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord);
-                half3 color = _PreviewUsesBloomEncoding > 0.5 ? DecodeHDR(source) : source.rgb;
-                // Like URP, intensity scales the reconstructed bloom, after thresholding and filtering.
-                return half4(color * _BloomIntensity, 1);
+                float2 uv = UnityStereoTransformScreenSpaceTex(input.texcoord);
+                half3 color = _PreviewSource > 0.5
+                    ? SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv).rgb : CombinedBloom(uv);
+                return half4(color, 1);
             }
             ENDHLSL
         }
@@ -324,20 +338,18 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
             #pragma fragment FragComposite
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
-            TEXTURE2D_X(_LayerBloomTexture);
-            float _BloomIntensity;
 
             half4 FragComposite(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 float2 uv = UnityStereoTransformScreenSpaceTex(input.texcoord);
                 half4 scene = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                half3 bloom = DecodeHDR(SAMPLE_TEXTURE2D_X(_LayerBloomTexture, sampler_LinearClamp, uv));
+                half3 bloom = CombinedBloom(uv);
                 // Add light in linear space, then return to the camera texture's color space.
                 #if UNITY_COLORSPACE_GAMMA
                     scene.rgb = SRGBToLinear(scene.rgb);
                 #endif
-                scene.rgb += bloom * _BloomIntensity;
+                scene.rgb += bloom;
                 #if UNITY_COLORSPACE_GAMMA
                     scene.rgb = LinearToSRGB(scene.rgb);
                 #endif

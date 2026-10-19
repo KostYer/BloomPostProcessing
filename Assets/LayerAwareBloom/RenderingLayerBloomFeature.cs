@@ -11,32 +11,55 @@ namespace LayerAwareBloom
     // Visible Rendering Layer selection, HDR source extraction, and URP Gaussian bloom.
     public sealed class RenderingLayerBloomFeature : ScriptableRendererFeature
     {
-        [SerializeField] private RenderingLayerMask renderingLayers = 1;
+        public const int GroupCount = 3;
+
+        [System.Serializable]
+        public sealed class BloomGroupSettings
+        {
+            public string name = "Bloom Group";
+            public bool enabled = true;
+            public RenderingLayerMask renderingLayers = 1;
+            [Min(0)] public float threshold = 0.9f;
+            [Min(0)] public float intensity = 1f;
+            [ColorUsage(false, false)] public Color tint = Color.white;
+            [Min(0)] public float clamp = 65472f;
+            [Range(0, 1)] public float scatter = 0.7f;
+            [Range(2, 8)] public int maxIterations = 6;
+            public BloomDownscaleMode downscale = BloomDownscaleMode.Half;
+            public bool highQualityFiltering;
+        }
+
+        [SerializeField] private BloomGroupSettings[] groups;
+        // Legacy fields migrate existing renderer assets into Group 1 on first load.
+        [SerializeField, HideInInspector] private RenderingLayerMask renderingLayers = 1;
         [SerializeField, HideInInspector] private bool showFullscreen;
         [FormerlySerializedAs("silhouetteShader")]
         [SerializeField] private Shader bloomShader;
         [FormerlySerializedAs("blurSilhouette")]
         [FormerlySerializedAs("blurMask")]
         [SerializeField] private bool enableBloom = true;
-        [SerializeField, Min(0)] private float threshold = 0.9f;
-        [SerializeField, Min(0)] private float intensity = 1f;
-        [SerializeField, Min(0)] private float clamp = 65472f;
-        [SerializeField, Range(0, 1)] private float scatter = 0.7f;
-        [SerializeField, Range(2, 8)] private int maxIterations = 6;
-        [SerializeField] private BloomDownscaleMode downscale = BloomDownscaleMode.Half;
-        [SerializeField] private bool highQualityFiltering;
+        [SerializeField, HideInInspector] private float threshold = 0.9f;
+        [SerializeField, HideInInspector] private float intensity = 1f;
+        [SerializeField, HideInInspector] private float clamp = 65472f;
+        [SerializeField, HideInInspector] private float scatter = 0.7f;
+        [SerializeField, HideInInspector] private int maxIterations = 6;
+        [SerializeField, HideInInspector] private BloomDownscaleMode downscale = BloomDownscaleMode.Half;
+        [SerializeField, HideInInspector] private bool highQualityFiltering;
+        [SerializeField, HideInInspector] private int previewGroup = -1;
 
         private Material maskMaterial;
         private Material blurMaterial;
         private Material highQualityBlurMaterial;
-        private BloomMaskPass bloomMaskPass;
-        private BloomCompositePass bloomCompositePass;
-        private FullscreenPreviewPass fullscreenPreviewPass;
+        private BloomMaskPass[] bloomMaskPasses;
+        private BloomOutputPass bloomCompositePass;
+        private BloomOutputPass fullscreenPreviewPass;
+
+        public IReadOnlyList<BloomGroupSettings> Groups { get { EnsureGroups(); return groups; } }
 
         public RenderingLayerMask RenderingLayers
         {
-            get => renderingLayers;
-            set => renderingLayers = value;
+            get => Groups[0].renderingLayers;
+            set { EnsureGroups(); groups[0].renderingLayers = value; }
         }
 
         public bool ShowFullscreen
@@ -45,8 +68,36 @@ namespace LayerAwareBloom
             set => showFullscreen = value;
         }
 
+        // -1 previews all active groups; 0..2 isolate a group. Source preview defaults to Group 1.
+        public int PreviewGroup
+        {
+            get => previewGroup;
+            set => previewGroup = Mathf.Clamp(value, -1, GroupCount - 1);
+        }
+
+        private void EnsureGroups()
+        {
+            if (groups == null || groups.Length == 0)
+            {
+                groups = new BloomGroupSettings[GroupCount];
+                groups[0] = new BloomGroupSettings
+                {
+                    name = "Group 1", renderingLayers = renderingLayers, threshold = threshold,
+                    intensity = intensity, clamp = clamp, scatter = scatter, maxIterations = maxIterations,
+                    downscale = downscale, highQualityFiltering = highQualityFiltering
+                };
+            }
+            if (groups.Length != GroupCount) System.Array.Resize(ref groups, GroupCount);
+            for (int i = 0; i < GroupCount; i++)
+                groups[i] ??= new BloomGroupSettings
+                {
+                    name = $"Group {i + 1}", enabled = false, renderingLayers = (uint)(1 << (i + 1))
+                };
+        }
+
         public override void Create()
         {
+            EnsureGroups();
             CoreUtils.Destroy(maskMaterial);
             CoreUtils.Destroy(blurMaterial);
             CoreUtils.Destroy(highQualityBlurMaterial);
@@ -58,22 +109,23 @@ namespace LayerAwareBloom
             if (blurMaterial != null)
             {
                 // Separate immutable variants avoid changing keywords between recorded draws.
-                blurMaterial.SetFloat("_PreviewUsesBloomEncoding", 1);
-                highQualityBlurMaterial.SetFloat("_PreviewUsesBloomEncoding", 1);
                 highQualityBlurMaterial.EnableKeyword("_BLOOM_HQ");
             }
-            bloomMaskPass = new BloomMaskPass
+            bloomMaskPasses = new BloomMaskPass[GroupCount];
+            for (int i = 0; i < GroupCount; i++)
             {
-                renderPassEvent = RenderPassEvent.AfterRenderingOpaques,
-                // HDR extraction samples active camera color, which must be a texture rather than the backbuffer.
-                requiresIntermediateTexture = true
-            };
-            bloomCompositePass = new BloomCompositePass
+                bloomMaskPasses[i] = new BloomMaskPass(i)
+                {
+                    renderPassEvent = RenderPassEvent.AfterRenderingOpaques,
+                    requiresIntermediateTexture = true
+                };
+            }
+            bloomCompositePass = new BloomOutputPass(false)
             {
                 renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing,
                 requiresIntermediateTexture = true
             };
-            fullscreenPreviewPass = new FullscreenPreviewPass { renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing };
+            fullscreenPreviewPass = new BloomOutputPass(true) { renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing };
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -85,19 +137,32 @@ namespace LayerAwareBloom
             if (!enableBloom && !showFullscreen)
                 return;
 
-            var filterMaterial = highQualityFiltering ? highQualityBlurMaterial : blurMaterial;
-            bloomMaskPass.Setup(maskMaterial, renderingLayers, enableBloom ? filterMaterial : null,
-                scatter, maxIterations, downscale, threshold, clamp);
-            renderer.EnqueuePass(bloomMaskPass);
+            EnsureGroups();
+            int selectedPreview = Mathf.Clamp(previewGroup, -1, GroupCount - 1);
+            if (!enableBloom) selectedPreview = Mathf.Max(0, selectedPreview);
+            bool anyGroup = false;
+            for (int i = 0; i < GroupCount; i++)
+            {
+                var group = groups[i];
+                if (!group.enabled || (uint)group.renderingLayers == 0 ||
+                    (enableBloom && group.intensity <= 0) ||
+                    (showFullscreen && selectedPreview >= 0 && selectedPreview != i))
+                    continue;
+                var filter = group.highQualityFiltering ? highQualityBlurMaterial : blurMaterial;
+                bloomMaskPasses[i].Setup(maskMaterial, group.renderingLayers, enableBloom ? filter : null,
+                    group.scatter, group.maxIterations, group.downscale, group.threshold, group.clamp,
+                    group.tint.linear * Mathf.Max(0, group.intensity));
+                renderer.EnqueuePass(bloomMaskPasses[i]);
+                anyGroup = true;
+            }
             if (showFullscreen)
             {
-                fullscreenPreviewPass.Setup(enableBloom ? filterMaterial : maskMaterial,
-                    enableBloom ? Mathf.Max(0, intensity) : 1f);
+                fullscreenPreviewPass.Setup(maskMaterial, !enableBloom, selectedPreview);
                 renderer.EnqueuePass(fullscreenPreviewPass);
             }
-            else if (enableBloom && intensity > 0)
+            else if (anyGroup)
             {
-                bloomCompositePass.Setup(filterMaterial, intensity);
+                bloomCompositePass.Setup(maskMaterial, false, -1);
                 renderer.EnqueuePass(bloomCompositePass);
             }
         }
@@ -115,12 +180,29 @@ namespace LayerAwareBloom
         // Handles are shared only within this camera's current graph, never across frames.
         public sealed class BloomFrameData : ContextItem
         {
-            public TextureHandle texture;
-            public override void Reset() => texture = TextureHandle.nullHandle;
+            public readonly TextureHandle[] textures = new TextureHandle[GroupCount];
+            public readonly Vector4[] weights = new Vector4[GroupCount];
+            public override void Reset()
+            {
+                for (int i = 0; i < GroupCount; i++)
+                {
+                    textures[i] = TextureHandle.nullHandle;
+                    weights[i] = Vector4.zero;
+                }
+            }
         }
 
         private sealed class BloomMaskPass : ScriptableRenderPass
         {
+            private readonly int groupIndex;
+            private readonly string groupLabel;
+            private Vector4 weight;
+
+            public BloomMaskPass(int groupIndex)
+            {
+                this.groupIndex = groupIndex;
+                groupLabel = $"Rendering Layer Bloom Group {groupIndex + 1}";
+            }
             private static readonly List<ShaderTagId> ShaderTags = new()
             {
                 new ShaderTagId("UniversalForward"),
@@ -170,7 +252,7 @@ namespace LayerAwareBloom
             }
 
             public void Setup(Material maskMaterial, uint layerMask, Material blurMaterial,
-                float scatterValue, int iterations, BloomDownscaleMode scale, float thresholdValue, float clampValue)
+                float scatterValue, int iterations, BloomDownscaleMode scale, float thresholdValue, float clampValue, Color weight)
             {
                 this.maskMaterial = maskMaterial;
                 renderingLayerMask = layerMask;
@@ -180,6 +262,7 @@ namespace LayerAwareBloom
                 downscale = scale;
                 threshold = Mathf.Max(0, thresholdValue);
                 clamp = Mathf.Max(0, clampValue);
+                this.weight = weight;
             }
 
             public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -193,7 +276,7 @@ namespace LayerAwareBloom
 
                 // Match depth dimensions and sample count so the attachments are compatible.
                 var descriptor = renderGraph.GetTextureDesc(resources.activeDepthTexture);
-                descriptor.name = "Rendering Layer Bloom Mask (BW)";
+                descriptor.name = $"{groupLabel} Mask (BW)";
                 descriptor.format = GraphicsFormat.R8G8B8A8_UNorm;
                 descriptor.isShadowMap = false;
                 descriptor.bindTextureMS = false;
@@ -201,8 +284,8 @@ namespace LayerAwareBloom
                 descriptor.clearColor = Color.black;
                 descriptor.filterMode = FilterMode.Point;
                 var mask = renderGraph.CreateTexture(descriptor);
-                var bloomFrameData = frameData.Create<BloomFrameData>();
-                bloomFrameData.texture = mask;
+                var bloomFrameData = frameData.Contains<BloomFrameData>()
+                    ? frameData.Get<BloomFrameData>() : frameData.Create<BloomFrameData>();
 
                 var drawing = RenderingUtils.CreateDrawingSettings(
                     ShaderTags, rendering, camera, lights, camera.defaultOpaqueSortFlags);
@@ -213,7 +296,7 @@ namespace LayerAwareBloom
                     new RendererListParams(rendering.cullResults, drawing, filtering));
 
                 using (var builder = renderGraph.AddRasterRenderPass<PassData>(
-                    "Rendering Layer Bloom Mask", out var data))
+                    $"{groupLabel} Mask", out var data))
                 {
                     data.rendererList = rendererList;
                     builder.UseRendererList(rendererList);
@@ -228,13 +311,14 @@ namespace LayerAwareBloom
                 // Select full-resolution HDR color BEFORE any spatial filtering. Filtering camera color
                 // first would allow bright unselected neighbours to leak into selected source pixels.
                 var source = RecordSourceExtraction(renderGraph, resources.activeColorTexture, mask);
-                bloomFrameData.texture = filterMaterial != null ? RecordBloomPyramid(renderGraph, source) : source;
+                bloomFrameData.textures[groupIndex] = filterMaterial != null ? RecordBloomPyramid(renderGraph, source) : source;
+                bloomFrameData.weights[groupIndex] = weight;
             }
 
             private TextureHandle RecordSourceExtraction(RenderGraph graph, TextureHandle cameraColor, TextureHandle mask)
             {
                 var descriptor = graph.GetTextureDesc(cameraColor);
-                descriptor.name = "Rendering Layer Bloom HDR Source";
+                descriptor.name = $"{groupLabel} HDR Source";
                 descriptor.format = GraphicsFormat.R16G16B16A16_SFloat;
                 descriptor.msaaSamples = MSAASamples.None;
                 descriptor.bindTextureMS = false;
@@ -245,7 +329,7 @@ namespace LayerAwareBloom
                 descriptor.autoGenerateMips = false;
                 var source = graph.CreateTexture(descriptor);
 
-                using var builder = graph.AddRasterRenderPass<PassData>("Rendering Layer Bloom Extract HDR", out var data);
+                using var builder = graph.AddRasterRenderPass<PassData>($"{groupLabel} Extract HDR", out var data);
                 data.source = cameraColor;
                 data.selectionMask = mask;
                 data.lowMip = TextureHandle.nullHandle;
@@ -286,9 +370,9 @@ namespace LayerAwareBloom
                 {
                     descriptor.width = width;
                     descriptor.height = height;
-                    descriptor.name = $"Rendering Layer Bloom Down {i}";
+                    descriptor.name = $"{groupLabel} Down {i}";
                     downsamplePyramid[i] = renderGraph.CreateTexture(descriptor);
-                    descriptor.name = $"Rendering Layer Bloom Up {i}";
+                    descriptor.name = $"{groupLabel} Up {i}";
                     upsamplePyramid[i] = renderGraph.CreateTexture(descriptor);
                     width = Mathf.Max(1, width >> 1);
                     height = Mathf.Max(1, height >> 1);
@@ -318,7 +402,7 @@ namespace LayerAwareBloom
 
             private void RecordFilterPass(RenderGraph graph, string name, TextureHandle source, TextureHandle destination, int shaderPass, Vector4 parameters, TextureHandle lowMip = default)
             {
-                using var builder = graph.AddRasterRenderPass<PassData>(name, out var data);
+                using var builder = graph.AddRasterRenderPass<PassData>($"{groupLabel}: {name}", out var data);
                 data.source = source;
                 data.lowMip = lowMip;
                 data.selectionMask = TextureHandle.nullHandle;
@@ -368,129 +452,110 @@ namespace LayerAwareBloom
             }
         }
 
-        private sealed class BloomCompositePass : ScriptableRenderPass
+        // Both outputs read the same independent pyramids and apply each weight exactly once.
+        private sealed class BloomOutputPass : ScriptableRenderPass
         {
-            private const int Composite = 7;
+            private const int Composite = 7, Preview = 1;
             private static readonly int BlitTexture = Shader.PropertyToID("_BlitTexture");
             private static readonly int BlitScaleBias = Shader.PropertyToID("_BlitScaleBias");
-            private static readonly int BloomTexture = Shader.PropertyToID("_LayerBloomTexture");
-            private static readonly int BloomIntensity = Shader.PropertyToID("_BloomIntensity");
+            private static readonly int PreviewSource = Shader.PropertyToID("_PreviewSource");
+            private static readonly int[] BloomTextures =
+            {
+                Shader.PropertyToID("_LayerBloomTexture0"), Shader.PropertyToID("_LayerBloomTexture1"),
+                Shader.PropertyToID("_LayerBloomTexture2")
+            };
+            private static readonly int[] BloomWeights =
+            {
+                Shader.PropertyToID("_LayerBloomWeight0"), Shader.PropertyToID("_LayerBloomWeight1"),
+                Shader.PropertyToID("_LayerBloomWeight2")
+            };
+            private readonly bool preview;
             private Material material;
-            private float intensity;
+            private bool sourcePreview;
+            private int previewGroup;
+
+            public BloomOutputPass(bool preview) => this.preview = preview;
 
             private sealed class PassData
             {
-                public TextureHandle scene;
-                public TextureHandle bloom;
+                public TextureHandle source;
+                public readonly TextureHandle[] bloom = new TextureHandle[GroupCount];
+                public readonly Vector4[] weights = new Vector4[GroupCount];
                 public Material material;
-                public float intensity;
+                public int shaderPass;
+                public bool sourcePreview;
                 public readonly MaterialPropertyBlock properties = new();
             }
 
-            public void Setup(Material material, float intensity)
+            public void Setup(Material material, bool sourcePreview, int previewGroup)
             {
                 this.material = material;
-                this.intensity = intensity;
+                this.sourcePreview = sourcePreview;
+                this.previewGroup = previewGroup;
             }
 
             public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
             {
-                if (!frameData.Contains<BloomFrameData>())
-                    return;
-                var bloom = frameData.Get<BloomFrameData>().texture;
+                var bloom = frameData.Contains<BloomFrameData>() ? frameData.Get<BloomFrameData>() : null;
                 var resources = frameData.Get<UniversalResourceData>();
-                if (!bloom.IsValid() || resources.isActiveTargetBackBuffer)
+                if (!preview && (bloom == null || resources.isActiveTargetBackBuffer))
                     return;
 
-                var scene = resources.activeColorTexture;
-                var descriptor = graph.GetTextureDesc(scene);
-                descriptor.name = "Rendering Layer Bloom Scene Composite";
-                descriptor.msaaSamples = MSAASamples.None;
-                descriptor.bindTextureMS = false;
-                descriptor.clearBuffer = false;
-                var destination = graph.CreateTexture(descriptor);
-
-                using (var builder = graph.AddRasterRenderPass<PassData>(
-                    "Rendering Layer Bloom Composite", out var data))
+                var destination = resources.activeColorTexture;
+                var source = preview ? TextureHandle.nullHandle : destination;
+                if (preview && sourcePreview && bloom != null)
+                    source = bloom.textures[Mathf.Clamp(previewGroup, 0, GroupCount - 1)];
+                if (!preview)
                 {
-                    data.scene = scene;
-                    data.bloom = bloom;
+                    var descriptor = graph.GetTextureDesc(source);
+                    descriptor.name = "Rendering Layer Bloom Scene Composite";
+                    descriptor.msaaSamples = MSAASamples.None;
+                    descriptor.bindTextureMS = false;
+                    descriptor.clearBuffer = false;
+                    destination = graph.CreateTexture(descriptor);
+                }
+
+                using (var builder = graph.AddRasterRenderPass<PassData>(preview
+                    ? "Rendering Layer Bloom Fullscreen Preview" : "Rendering Layer Bloom Composite", out var data))
+                {
+                    data.source = source;
                     data.material = material;
-                    data.intensity = intensity;
-                    builder.UseTexture(scene, AccessFlags.Read);
-                    builder.UseTexture(bloom, AccessFlags.Read);
-                    // Read the scene and write a separate texture; never sample our own render target.
+                    data.shaderPass = preview ? Preview : Composite;
+                    data.sourcePreview = sourcePreview;
+                    if (source.IsValid()) builder.UseTexture(source, AccessFlags.Read);
+                    for (int i = 0; i < GroupCount; i++)
+                    {
+                        // PassData is pooled: always overwrite every slot, including inactive groups.
+                        bool include = !sourcePreview && bloom != null && (!preview || previewGroup < 0 || previewGroup == i);
+                        data.bloom[i] = include ? bloom.textures[i] : TextureHandle.nullHandle;
+                        data.weights[i] = include ? bloom.weights[i] : Vector4.zero;
+                        if (data.bloom[i].IsValid()) builder.UseTexture(data.bloom[i], AccessFlags.Read);
+                    }
                     builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
                     builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
                     {
                         var properties = passData.properties;
                         properties.Clear();
-                        RTHandle sceneTexture = passData.scene;
-                        RTHandle bloomTexture = passData.bloom;
-                        properties.SetTexture(BlitTexture, sceneTexture.rt);
-                        properties.SetTexture(BloomTexture, bloomTexture.rt);
+                        properties.SetTexture(BlitTexture, GetTexture(passData.source));
                         properties.SetVector(BlitScaleBias, new Vector4(1, 1, 0, 0));
-                        properties.SetFloat(BloomIntensity, passData.intensity);
-                        context.cmd.DrawProcedural(Matrix4x4.identity, passData.material, Composite,
+                        properties.SetFloat(PreviewSource, passData.sourcePreview ? 1 : 0);
+                        for (int i = 0; i < GroupCount; i++)
+                        {
+                            properties.SetTexture(BloomTextures[i], GetTexture(passData.bloom[i]));
+                            properties.SetVector(BloomWeights[i], passData.weights[i]);
+                        }
+                        context.cmd.DrawProcedural(Matrix4x4.identity, passData.material, passData.shaderPass,
                             MeshTopology.Triangles, 3, 1, properties);
                     });
                 }
-
-                // Subsequent URP passes (including grading/tonemapping) consume the combined HDR image.
-                resources.cameraColor = destination;
-            }
-        }
-
-        private sealed class FullscreenPreviewPass : ScriptableRenderPass
-        {
-            private Material previewMaterial;
-            private float intensity;
-            private static readonly int BlitTexture = Shader.PropertyToID("_BlitTexture");
-            private static readonly int BlitScaleBias = Shader.PropertyToID("_BlitScaleBias");
-            private static readonly int BloomIntensity = Shader.PropertyToID("_BloomIntensity");
-
-            private sealed class PassData
-            {
-                public TextureHandle source;
-                public Material material;
-                public float intensity;
-                public readonly MaterialPropertyBlock properties = new();
+                if (!preview) resources.cameraColor = destination;
             }
 
-            public void Setup(Material previewMaterial, float intensity)
+            private static Texture GetTexture(TextureHandle handle)
             {
-                this.previewMaterial = previewMaterial;
-                this.intensity = intensity;
-            }
-
-            public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
-            {
-                if (!frameData.Contains<BloomFrameData>())
-                    return;
-                var source = frameData.Get<BloomFrameData>().texture;
-                if (!source.IsValid())
-                    return;
-
-                var resources = frameData.Get<UniversalResourceData>();
-                using var builder = renderGraph.AddRasterRenderPass<PassData>(
-                    "Rendering Layer Bloom Fullscreen Preview", out var data);
-                data.source = source;
-                data.material = previewMaterial;
-                data.intensity = intensity;
-                builder.UseTexture(source, AccessFlags.Read);
-                // Only overwrite the camera output; do not sample it or modify scene depth.
-                builder.SetRenderAttachment(resources.activeColorTexture, 0, AccessFlags.Write);
-                builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
-                {
-                    var properties = passData.properties;
-                    properties.Clear();
-                    RTHandle sourceTexture = passData.source;
-                    properties.SetTexture(BlitTexture, sourceTexture.rt);
-                    properties.SetVector(BlitScaleBias, new Vector4(1, 1, 0, 0));
-                    properties.SetFloat(BloomIntensity, passData.intensity);
-                    context.cmd.DrawProcedural(Matrix4x4.identity, passData.material, 1,
-                        MeshTopology.Triangles, 3, 1, properties);
-                });
+                if (!handle.IsValid()) return Texture2D.blackTexture;
+                RTHandle texture = handle;
+                return texture.rt;
             }
         }
     }

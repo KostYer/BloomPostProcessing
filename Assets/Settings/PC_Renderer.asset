@@ -69,6 +69,46 @@ MonoBehaviour:
   m_Name: Rendering Layer Bloom
   m_EditorClassIdentifier: 
   m_Active: 1
+  groups:
+  - name: Group 1
+    enabled: 1
+    renderingLayers:
+      serializedVersion: 0
+      m_Bits: 2
+    threshold: 0.9
+    intensity: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    clamp: 65472
+    scatter: 0.7
+    maxIterations: 3
+    downscale: 0
+    highQualityFiltering: 1
+  - name: Group 2
+    enabled: 0
+    renderingLayers:
+      serializedVersion: 0
+      m_Bits: 4
+    threshold: 0.9
+    intensity: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    clamp: 65472
+    scatter: 0.7
+    maxIterations: 6
+    downscale: 0
+    highQualityFiltering: 0
+  - name: Group 3
+    enabled: 0
+    renderingLayers:
+      serializedVersion: 0
+      m_Bits: 8
+    threshold: 0.9
+    intensity: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    clamp: 65472
+    scatter: 0.7
+    maxIterations: 6
+    downscale: 0
+    highQualityFiltering: 0
   renderingLayers:
     serializedVersion: 0
     m_Bits: 2
@@ -82,6 +122,7 @@ MonoBehaviour:
   maxIterations: 3
   downscale: 0
   highQualityFiltering: 1
+  previewGroup: -1
 --- !u!114 &7833122117494664109
 MonoBehaviour:
   m_ObjectHideFlags: 0
