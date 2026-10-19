@@ -8,7 +8,7 @@ using UnityEngine.Serialization;
 
 namespace LayerAwareBloom
 {
-    // Visible-surface mask and URP Gaussian bloom blur, displayed as a grayscale mask.
+    // Visible Rendering Layer selection, HDR source extraction, and URP Gaussian bloom.
     public sealed class RenderingLayerBloomFeature : ScriptableRendererFeature
     {
         [SerializeField] private RenderingLayerMask renderingLayers = 1;
@@ -16,7 +16,11 @@ namespace LayerAwareBloom
         [FormerlySerializedAs("silhouetteShader")]
         [SerializeField] private Shader bloomShader;
         [FormerlySerializedAs("blurSilhouette")]
-        [SerializeField] private bool blurMask = true;
+        [FormerlySerializedAs("blurMask")]
+        [SerializeField] private bool enableBloom = true;
+        [SerializeField, Min(0)] private float threshold = 0.9f;
+        [SerializeField, Min(0)] private float intensity = 1f;
+        [SerializeField, Min(0)] private float clamp = 65472f;
         [SerializeField, Range(0, 1)] private float scatter = 0.7f;
         [SerializeField, Range(2, 8)] private int maxIterations = 6;
         [SerializeField] private BloomDownscaleMode downscale = BloomDownscaleMode.Half;
@@ -57,7 +61,12 @@ namespace LayerAwareBloom
                 highQualityBlurMaterial.SetFloat("_PreviewUsesBloomEncoding", 1);
                 highQualityBlurMaterial.EnableKeyword("_BLOOM_HQ");
             }
-            bloomMaskPass = new BloomMaskPass { renderPassEvent = RenderPassEvent.AfterRenderingOpaques };
+            bloomMaskPass = new BloomMaskPass
+            {
+                renderPassEvent = RenderPassEvent.AfterRenderingOpaques,
+                // HDR extraction samples active camera color, which must be a texture rather than the backbuffer.
+                requiresIntermediateTexture = true
+            };
             fullscreenPreviewPass = new FullscreenPreviewPass { renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing };
         }
 
@@ -69,12 +78,13 @@ namespace LayerAwareBloom
                 return;
 
             var filterMaterial = highQualityFiltering ? highQualityBlurMaterial : blurMaterial;
-            bloomMaskPass.Setup(maskMaterial, renderingLayers, blurMask ? filterMaterial : null,
-                scatter, maxIterations, downscale);
+            bloomMaskPass.Setup(maskMaterial, renderingLayers, enableBloom ? filterMaterial : null,
+                scatter, maxIterations, downscale, threshold, clamp);
             renderer.EnqueuePass(bloomMaskPass);
             if (showFullscreen)
             {
-                fullscreenPreviewPass.Setup(blurMask ? filterMaterial : maskMaterial);
+                fullscreenPreviewPass.Setup(enableBloom ? filterMaterial : maskMaterial,
+                    enableBloom ? Mathf.Max(0, intensity) : 1f);
                 renderer.EnqueuePass(fullscreenPreviewPass);
             }
         }
@@ -109,12 +119,14 @@ namespace LayerAwareBloom
             private const int MaxPyramidLevels = 8;
             // Shader passes 0/1 draw the mask and preview. These four contain the URP Gaussian filters in RenderingLayerBloom.shader.
             private const int Prefilter = 2, BlurHorizontal = 3, BlurVertical = 4, Upsample = 5;
+            private const int ExtractSource = 6;
             private static readonly int BlitTexture = Shader.PropertyToID("_BlitTexture");
             private static readonly int BlitTexelSize = Shader.PropertyToID("_BlitTexture_TexelSize");
             private static readonly int BlitScaleBias = Shader.PropertyToID("_BlitScaleBias");
             private static readonly int LowMip = Shader.PropertyToID("_SourceTexLowMip");
             private static readonly int LowMipTexelSize = Shader.PropertyToID("_SourceTexLowMip_TexelSize");
             private static readonly int Parameters = Shader.PropertyToID("_Params");
+            private static readonly int SelectionMask = Shader.PropertyToID("_SelectionMask");
 
             private readonly TextureHandle[] downsamplePyramid = new TextureHandle[MaxPyramidLevels];
             private readonly TextureHandle[] upsamplePyramid = new TextureHandle[MaxPyramidLevels];
@@ -122,6 +134,8 @@ namespace LayerAwareBloom
             private float scatter;
             private int maxIterations;
             private BloomDownscaleMode downscale;
+            private float threshold;
+            private float clamp;
 
             private Material maskMaterial;
             private uint renderingLayerMask;
@@ -132,6 +146,7 @@ namespace LayerAwareBloom
 
                 public TextureHandle source;
                 public TextureHandle lowMip;
+                public TextureHandle selectionMask;
                 public Vector4 sourceTexelSize;
                 public Vector4 lowMipTexelSize;
                 public Vector4 parameters;
@@ -142,7 +157,7 @@ namespace LayerAwareBloom
             }
 
             public void Setup(Material maskMaterial, uint layerMask, Material blurMaterial,
-                float scatterValue, int iterations, BloomDownscaleMode scale)
+                float scatterValue, int iterations, BloomDownscaleMode scale, float thresholdValue, float clampValue)
             {
                 this.maskMaterial = maskMaterial;
                 renderingLayerMask = layerMask;
@@ -150,11 +165,15 @@ namespace LayerAwareBloom
                 scatter = Mathf.Clamp01(scatterValue);
                 maxIterations = Mathf.Clamp(iterations, 2, MaxPyramidLevels);
                 downscale = scale;
+                threshold = Mathf.Max(0, thresholdValue);
+                clamp = Mathf.Max(0, clampValue);
             }
 
             public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
             {
                 var resources = frameData.Get<UniversalResourceData>();
+                if (resources.isActiveTargetBackBuffer)
+                    return;
                 var camera = frameData.Get<UniversalCameraData>();
                 var rendering = frameData.Get<UniversalRenderingData>();
                 var lights = frameData.Get<UniversalLightData>();
@@ -193,10 +212,40 @@ namespace LayerAwareBloom
                         context.cmd.DrawRendererList(passData.rendererList));
                 }
 
-                // After closing the mask builder, record the downsample/upsample passes.
-                // FullscreenPreviewPass reads whichever texture the frame-data item holds.
-                if (filterMaterial != null)
-                    bloomFrameData.texture = RecordBloomPyramid(renderGraph, mask);
+                // Select full-resolution HDR color BEFORE any spatial filtering. Filtering camera color
+                // first would allow bright unselected neighbours to leak into selected source pixels.
+                var source = RecordSourceExtraction(renderGraph, resources.activeColorTexture, mask);
+                bloomFrameData.texture = filterMaterial != null ? RecordBloomPyramid(renderGraph, source) : source;
+            }
+
+            private TextureHandle RecordSourceExtraction(RenderGraph graph, TextureHandle cameraColor, TextureHandle mask)
+            {
+                var descriptor = graph.GetTextureDesc(cameraColor);
+                descriptor.name = "Rendering Layer Bloom HDR Source";
+                descriptor.format = GraphicsFormat.R16G16B16A16_SFloat;
+                descriptor.msaaSamples = MSAASamples.None;
+                descriptor.bindTextureMS = false;
+                descriptor.clearBuffer = false;
+                descriptor.filterMode = FilterMode.Bilinear;
+                descriptor.wrapMode = TextureWrapMode.Clamp;
+                descriptor.useMipMap = false;
+                descriptor.autoGenerateMips = false;
+                var source = graph.CreateTexture(descriptor);
+
+                using var builder = graph.AddRasterRenderPass<PassData>("Rendering Layer Bloom Extract HDR", out var data);
+                data.source = cameraColor;
+                data.selectionMask = mask;
+                data.lowMip = TextureHandle.nullHandle;
+                data.sourceTexelSize = CalculateTexelSize(graph.GetTextureDesc(cameraColor));
+                data.parameters = Vector4.zero;
+                data.material = maskMaterial;
+                data.shaderPass = ExtractSource;
+                builder.UseTexture(cameraColor, AccessFlags.Read);
+                builder.UseTexture(mask, AccessFlags.Read);
+                builder.SetRenderAttachment(source, 0, AccessFlags.Write);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc<PassData>(ExecuteFilterPass);
+                return source;
             }
 
             private TextureHandle RecordBloomPyramid(RenderGraph renderGraph, TextureHandle source)
@@ -232,9 +281,10 @@ namespace LayerAwareBloom
                     height = Mathf.Max(1, height >> 1);
                 }
 
-                // Threshold/knee zero: the BW source is already selected, so do not discard its white pixels.
-                // Scatter remapping is the same as URP's Gaussian bloom.
-                var parameters = new Vector4(Mathf.Lerp(0.05f, 0.95f, scatter), 65472f, 0, 0);
+                // URP exposes threshold in gamma space and fixes the soft knee at half the linear threshold.
+                float linearThreshold = Mathf.GammaToLinearSpace(threshold);
+                var parameters = new Vector4(Mathf.Lerp(0.05f, 0.95f, scatter), clamp,
+                    linearThreshold, linearThreshold * 0.5f);
                 RecordFilterPass(renderGraph, "Rendering Layer Bloom Prefilter", source, downsamplePyramid[0], Prefilter, parameters);
                 for (int i = 1; i < levels; i++)
                 {
@@ -258,6 +308,7 @@ namespace LayerAwareBloom
                 using var builder = graph.AddRasterRenderPass<PassData>(name, out var data);
                 data.source = source;
                 data.lowMip = lowMip;
+                data.selectionMask = TextureHandle.nullHandle;
                 data.material = filterMaterial;
                 data.shaderPass = shaderPass;
                 data.parameters = parameters;
@@ -286,6 +337,11 @@ namespace LayerAwareBloom
                 properties.SetVector(BlitTexelSize, data.sourceTexelSize);
                 properties.SetVector(BlitScaleBias, new Vector4(1, 1, 0, 0));
                 properties.SetVector(Parameters, data.parameters);
+                if (data.selectionMask.IsValid())
+                {
+                    RTHandle selectionMask = data.selectionMask;
+                    properties.SetTexture(SelectionMask, selectionMask.rt);
+                }
                 if (data.lowMip.IsValid())
                 {
                     RTHandle low = data.lowMip;
@@ -302,32 +358,53 @@ namespace LayerAwareBloom
         private sealed class FullscreenPreviewPass : ScriptableRenderPass
         {
             private Material previewMaterial;
+            private float intensity;
+            private static readonly int BlitTexture = Shader.PropertyToID("_BlitTexture");
+            private static readonly int BlitScaleBias = Shader.PropertyToID("_BlitScaleBias");
+            private static readonly int BloomIntensity = Shader.PropertyToID("_BloomIntensity");
 
             private sealed class PassData
             {
                 public TextureHandle source;
                 public Material material;
+                public float intensity;
+                public readonly MaterialPropertyBlock properties = new();
             }
 
-            public void Setup(Material previewMaterial) => this.previewMaterial = previewMaterial;
+            public void Setup(Material previewMaterial, float intensity)
+            {
+                this.previewMaterial = previewMaterial;
+                this.intensity = intensity;
+            }
 
             public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
             {
-                var mask = frameData.Get<BloomFrameData>().texture;
-                if (!mask.IsValid())
+                if (!frameData.Contains<BloomFrameData>())
+                    return;
+                var source = frameData.Get<BloomFrameData>().texture;
+                if (!source.IsValid())
                     return;
 
                 var resources = frameData.Get<UniversalResourceData>();
                 using var builder = renderGraph.AddRasterRenderPass<PassData>(
                     "Rendering Layer Bloom Fullscreen Preview", out var data);
-                data.source = mask;
+                data.source = source;
                 data.material = previewMaterial;
-                builder.UseTexture(mask, AccessFlags.Read);
+                data.intensity = intensity;
+                builder.UseTexture(source, AccessFlags.Read);
                 // Only overwrite the camera output; do not sample it or modify scene depth.
                 builder.SetRenderAttachment(resources.activeColorTexture, 0, AccessFlags.Write);
                 builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
-                    Blitter.BlitTexture(context.cmd, passData.source,
-                        new Vector4(1, 1, 0, 0), passData.material, 1));
+                {
+                    var properties = passData.properties;
+                    properties.Clear();
+                    RTHandle sourceTexture = passData.source;
+                    properties.SetTexture(BlitTexture, sourceTexture.rt);
+                    properties.SetVector(BlitScaleBias, new Vector4(1, 1, 0, 0));
+                    properties.SetFloat(BloomIntensity, passData.intensity);
+                    context.cmd.DrawProcedural(Matrix4x4.identity, passData.material, 1,
+                        MeshTopology.Triangles, 3, 1, properties);
+                });
             }
         }
     }

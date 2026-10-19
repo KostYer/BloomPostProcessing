@@ -71,10 +71,13 @@ MonoBehaviour:
   m_Active: 1
   renderingLayers:
     serializedVersion: 0
-    m_Bits: 1
+    m_Bits: 2
   showFullscreen: 1
   bloomShader: {fileID: 4800000, guid: 7bf614eb4e2a4ab3a94f0c558a626850, type: 3}
-  blurMask: 1
+  enableBloom: 1
+  threshold: 0.9
+  intensity: 1
+  clamp: 65472
   scatter: 0.7
   maxIterations: 3
   downscale: 0

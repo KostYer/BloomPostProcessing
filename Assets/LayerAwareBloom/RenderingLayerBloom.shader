@@ -81,7 +81,7 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
 
         Pass
         {
-            Name "Fullscreen BW Preview"
+            Name "Fullscreen Bloom Preview"
             ZWrite Off
             ZTest Always
             Cull Off
@@ -93,17 +93,15 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
             float _PreviewUsesBloomEncoding;
+            float _BloomIntensity;
 
             half4 FragPreview(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                half mask = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord).r;
-                #if UNITY_COLORSPACE_GAMMA
-                    // URP encodes its bloom pyramid with sqrt in gamma projects.
-                    if (_PreviewUsesBloomEncoding > 0.5)
-                        mask *= mask;
-                #endif
-                return half4(mask, mask, mask, 1);
+                half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord);
+                half3 color = _PreviewUsesBloomEncoding > 0.5 ? DecodeHDR(source) : source.rgb;
+                // Like URP, intensity scales the reconstructed bloom, after thresholding and filtering.
+                return half4(color * _BloomIntensity, 1);
             }
             ENDHLSL
         }
@@ -293,6 +291,27 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 half3 color = Upsample(UnityStereoTransformScreenSpaceTex(input.texcoord));
                 return EncodeHDR(color);
+            }
+            ENDHLSL
+        }
+        // Pass 6: full-resolution selection before the bloom prefilter samples neighbouring pixels.
+        Pass
+        {
+            Name "Extract Selected HDR Color"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment FragExtractSource
+            #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            TEXTURE2D_X(_SelectionMask);
+
+            half4 FragExtractSource(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                float2 uv = UnityStereoTransformScreenSpaceTex(input.texcoord);
+                // Point samples keep unselected neighbours out of the source at selection edges.
+                half mask = SAMPLE_TEXTURE2D_X(_SelectionMask, sampler_PointClamp, uv).r;
+                half3 color = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv).rgb;
+                return half4(mask > 0 ? color * mask : half3(0, 0, 0), 1);
             }
             ENDHLSL
         }
