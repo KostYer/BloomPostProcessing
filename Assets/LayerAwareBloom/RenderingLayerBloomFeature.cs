@@ -30,6 +30,7 @@ namespace LayerAwareBloom
         private Material blurMaterial;
         private Material highQualityBlurMaterial;
         private BloomMaskPass bloomMaskPass;
+        private BloomCompositePass bloomCompositePass;
         private FullscreenPreviewPass fullscreenPreviewPass;
 
         public RenderingLayerMask RenderingLayers
@@ -67,6 +68,11 @@ namespace LayerAwareBloom
                 // HDR extraction samples active camera color, which must be a texture rather than the backbuffer.
                 requiresIntermediateTexture = true
             };
+            bloomCompositePass = new BloomCompositePass
+            {
+                renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing,
+                requiresIntermediateTexture = true
+            };
             fullscreenPreviewPass = new FullscreenPreviewPass { renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing };
         }
 
@@ -75,6 +81,8 @@ namespace LayerAwareBloom
             var cameraData = renderingData.cameraData;
             if (maskMaterial == null || cameraData.renderType != CameraRenderType.Base ||
                 (cameraData.cameraType != CameraType.Game && cameraData.cameraType != CameraType.SceneView))
+                return;
+            if (!enableBloom && !showFullscreen)
                 return;
 
             var filterMaterial = highQualityFiltering ? highQualityBlurMaterial : blurMaterial;
@@ -86,6 +94,11 @@ namespace LayerAwareBloom
                 fullscreenPreviewPass.Setup(enableBloom ? filterMaterial : maskMaterial,
                     enableBloom ? Mathf.Max(0, intensity) : 1f);
                 renderer.EnqueuePass(fullscreenPreviewPass);
+            }
+            else if (enableBloom && intensity > 0)
+            {
+                bloomCompositePass.Setup(filterMaterial, intensity);
+                renderer.EnqueuePass(bloomCompositePass);
             }
         }
 
@@ -352,6 +365,79 @@ namespace LayerAwareBloom
                 // The same fullscreen triangle as Blitter, with explicit bindings for BOTH upsample inputs.
                 context.cmd.DrawProcedural(Matrix4x4.identity, data.material, data.shaderPass,
                     MeshTopology.Triangles, 3, 1, properties);
+            }
+        }
+
+        private sealed class BloomCompositePass : ScriptableRenderPass
+        {
+            private const int Composite = 7;
+            private static readonly int BlitTexture = Shader.PropertyToID("_BlitTexture");
+            private static readonly int BlitScaleBias = Shader.PropertyToID("_BlitScaleBias");
+            private static readonly int BloomTexture = Shader.PropertyToID("_LayerBloomTexture");
+            private static readonly int BloomIntensity = Shader.PropertyToID("_BloomIntensity");
+            private Material material;
+            private float intensity;
+
+            private sealed class PassData
+            {
+                public TextureHandle scene;
+                public TextureHandle bloom;
+                public Material material;
+                public float intensity;
+                public readonly MaterialPropertyBlock properties = new();
+            }
+
+            public void Setup(Material material, float intensity)
+            {
+                this.material = material;
+                this.intensity = intensity;
+            }
+
+            public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
+            {
+                if (!frameData.Contains<BloomFrameData>())
+                    return;
+                var bloom = frameData.Get<BloomFrameData>().texture;
+                var resources = frameData.Get<UniversalResourceData>();
+                if (!bloom.IsValid() || resources.isActiveTargetBackBuffer)
+                    return;
+
+                var scene = resources.activeColorTexture;
+                var descriptor = graph.GetTextureDesc(scene);
+                descriptor.name = "Rendering Layer Bloom Scene Composite";
+                descriptor.msaaSamples = MSAASamples.None;
+                descriptor.bindTextureMS = false;
+                descriptor.clearBuffer = false;
+                var destination = graph.CreateTexture(descriptor);
+
+                using (var builder = graph.AddRasterRenderPass<PassData>(
+                    "Rendering Layer Bloom Composite", out var data))
+                {
+                    data.scene = scene;
+                    data.bloom = bloom;
+                    data.material = material;
+                    data.intensity = intensity;
+                    builder.UseTexture(scene, AccessFlags.Read);
+                    builder.UseTexture(bloom, AccessFlags.Read);
+                    // Read the scene and write a separate texture; never sample our own render target.
+                    builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
+                    builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
+                    {
+                        var properties = passData.properties;
+                        properties.Clear();
+                        RTHandle sceneTexture = passData.scene;
+                        RTHandle bloomTexture = passData.bloom;
+                        properties.SetTexture(BlitTexture, sceneTexture.rt);
+                        properties.SetTexture(BloomTexture, bloomTexture.rt);
+                        properties.SetVector(BlitScaleBias, new Vector4(1, 1, 0, 0));
+                        properties.SetFloat(BloomIntensity, passData.intensity);
+                        context.cmd.DrawProcedural(Matrix4x4.identity, passData.material, Composite,
+                            MeshTopology.Triangles, 3, 1, properties);
+                    });
+                }
+
+                // Subsequent URP passes (including grading/tonemapping) consume the combined HDR image.
+                resources.cameraColor = destination;
             }
         }
 

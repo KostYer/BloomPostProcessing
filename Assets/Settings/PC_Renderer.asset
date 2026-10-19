@@ -72,7 +72,7 @@ MonoBehaviour:
   renderingLayers:
     serializedVersion: 0
     m_Bits: 2
-  showFullscreen: 1
+  showFullscreen: 0
   bloomShader: {fileID: 4800000, guid: 7bf614eb4e2a4ab3a94f0c558a626850, type: 3}
   enableBloom: 1
   threshold: 0.9

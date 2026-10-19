@@ -315,6 +315,36 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
             }
             ENDHLSL
         }
+        // Pass 7: add bloom while camera color is still HDR, before URP post-processing.
+        Pass
+        {
+            Name "Composite Bloom Into Scene"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment FragComposite
+            #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+            TEXTURE2D_X(_LayerBloomTexture);
+            float _BloomIntensity;
+
+            half4 FragComposite(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                float2 uv = UnityStereoTransformScreenSpaceTex(input.texcoord);
+                half4 scene = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+                half3 bloom = DecodeHDR(SAMPLE_TEXTURE2D_X(_LayerBloomTexture, sampler_LinearClamp, uv));
+                // Add light in linear space, then return to the camera texture's color space.
+                #if UNITY_COLORSPACE_GAMMA
+                    scene.rgb = SRGBToLinear(scene.rgb);
+                #endif
+                scene.rgb += bloom * _BloomIntensity;
+                #if UNITY_COLORSPACE_GAMMA
+                    scene.rgb = LinearToSRGB(scene.rgb);
+                #endif
+                return scene; // Preserve the scene's alpha.
+            }
+            ENDHLSL
+        }
     }
     Fallback Off
 }

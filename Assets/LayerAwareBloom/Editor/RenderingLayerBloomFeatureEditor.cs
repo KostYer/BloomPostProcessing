@@ -32,7 +32,8 @@ namespace LayerAwareBloom.Editor
 
             EditorGUILayout.HelpBox(
                 "Visible selected surfaces supply their HDR scene color before post-processing. Threshold (gamma space), soft knee, clamp and filtering match URP Gaussian bloom. " +
-                "Intensity scales the final bloom. Disable Enable Bloom to inspect the selected HDR source. " +
+                "Bloom is added to the scene before post-processing, so enabled color grading and tonemapping affect the combined image. Intensity scales the added bloom. " +
+                "Disable Enable Bloom to restore the scene, or inspect the selected HDR source with the fullscreen preview. " +
                 "The fullscreen preview is bloom-only, after post-processing, without tone mapping; bright values can clip on screen. " +
                 "Enable HDR on the camera and URP asset. Standard opaque meshes only; custom vertex deformation is not supported yet.",
                 MessageType.Info);
