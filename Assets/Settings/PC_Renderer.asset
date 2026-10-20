@@ -27,7 +27,8 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: 7833122117494664109}
   - {fileID: 7823412291645092100}
-  m_RendererFeatureMap: ad6b866f10d7b46c0431ee6e0758926c
+  - {fileID: 1950797133203652212}
+  m_RendererFeatureMap: ad6b866f10d7b46c0431ee6e0758926c743e7429a89f121b
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -56,6 +57,21 @@ MonoBehaviour:
   m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 0
+--- !u!114 &1950797133203652212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cdaa5f719384ab744aeed508881b9f21, type: 3}
+  m_Name: HDR Tonemapping
+  m_EditorClassIdentifier: Assembly-CSharp::LayerAwareBloom.HdrTonemappingFeature
+  m_Active: 0
+  tonemappingShader: {fileID: 4800000, guid: 71f853b300010444fb17e864f50a825d, type: 3}
+  mode: 1
 --- !u!114 &7823412291645092100
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -80,7 +96,7 @@ MonoBehaviour:
     tint: {r: 1, g: 1, b: 1, a: 1}
     clamp: 65472
     scatter: 0.7
-    maxIterations: 3
+    maxIterations: 6
     downscale: 0
     highQualityFiltering: 1
   - name: Group 2

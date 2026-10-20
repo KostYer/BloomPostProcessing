@@ -149,7 +149,11 @@ namespace LayerAwareBloom
                 renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing,
                 requiresIntermediateTexture = true
             };
-            fullscreenPreviewPass = new BloomOutputPass(true) { renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing };
+            // Debug previews intentionally stay raw, after the separate optional tonemapper.
+            fullscreenPreviewPass = new BloomOutputPass(true)
+            {
+                renderPassEvent = (RenderPassEvent)((int)RenderPassEvent.AfterRenderingPostProcessing + 1)
+            };
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
