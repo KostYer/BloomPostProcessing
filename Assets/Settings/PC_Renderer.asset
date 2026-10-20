@@ -69,7 +69,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdaa5f719384ab744aeed508881b9f21, type: 3}
   m_Name: HDR Tonemapping
   m_EditorClassIdentifier: Assembly-CSharp::LayerAwareBloom.HdrTonemappingFeature
-  m_Active: 0
+  m_Active: 1
   tonemappingShader: {fileID: 4800000, guid: 71f853b300010444fb17e864f50a825d, type: 3}
   mode: 1
 --- !u!114 &7823412291645092100
@@ -117,6 +117,45 @@ MonoBehaviour:
     renderingLayers:
       serializedVersion: 0
       m_Bits: 8
+    threshold: 0.9
+    intensity: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    clamp: 65472
+    scatter: 0.7
+    maxIterations: 6
+    downscale: 0
+    highQualityFiltering: 0
+  - name: Group 4
+    enabled: 0
+    renderingLayers:
+      serializedVersion: 0
+      m_Bits: 0
+    threshold: 0.9
+    intensity: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    clamp: 65472
+    scatter: 0.7
+    maxIterations: 6
+    downscale: 0
+    highQualityFiltering: 0
+  - name: Group 5
+    enabled: 0
+    renderingLayers:
+      serializedVersion: 0
+      m_Bits: 0
+    threshold: 0.9
+    intensity: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    clamp: 65472
+    scatter: 0.7
+    maxIterations: 6
+    downscale: 0
+    highQualityFiltering: 0
+  - name: Group 6
+    enabled: 0
+    renderingLayers:
+      serializedVersion: 0
+      m_Bits: 0
     threshold: 0.9
     intensity: 1
     tint: {r: 1, g: 1, b: 1, a: 1}

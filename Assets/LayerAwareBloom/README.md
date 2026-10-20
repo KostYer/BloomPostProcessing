@@ -2,7 +2,7 @@
 
 This package contains two independent URP renderer features:
 
-- **Rendering Layer Bloom** selects opaque surfaces by Rendering Layer, builds up to three independent bloom groups, and optionally grades the combined image.
+- **Rendering Layer Bloom** selects opaque surfaces by Rendering Layer, builds up to six independent bloom groups, and optionally grades the combined image.
 - **HDR Tonemapping** maps the whole HDR image to SDR with **Neutral** or **ACES**. **None**, or disabling the feature, bypasses the pass.
 
 Add them from your Universal Renderer asset's **Add Renderer Feature** menu. HDR Tonemapping works on its own and does not require the bloom feature, a Volume, or the camera's Post Processing checkbox.
@@ -20,6 +20,8 @@ The package runs in this order regardless of the order of these two features in 
 **HDR scene → selective bloom → optional grading → tonemapping → display**
 
 Bloom-only and source debug previews intentionally replace the output afterward and remain untonemapped.
+
+New slots start disabled with no Rendering Layers assigned. Existing slot settings are preserved when upgrading from three slots. Disabled slots, empty layer masks, zero intensity, zero clamp, and black tint skip mask/source/pyramid rendering. Active results are packed for the final blend, which stops sampling at the active count. Raw source previews ignore intensity, clamp, and tint. An enabled layer mask with no visible matching objects is still rendered; this optimization does not scan the scene or read back masks.
 
 ## Integration
 

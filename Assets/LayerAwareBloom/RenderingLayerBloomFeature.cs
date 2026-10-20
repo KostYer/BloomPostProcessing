@@ -18,7 +18,7 @@ namespace LayerAwareBloom
     // Visible Rendering Layer selection, HDR source extraction, and URP Gaussian bloom.
     public sealed class RenderingLayerBloomFeature : ScriptableRendererFeature
     {
-        public const int GroupCount = 3;
+        public const int GroupCount = 6;
 
         [System.Serializable]
         public sealed class BloomGroupSettings
@@ -91,7 +91,7 @@ namespace LayerAwareBloom
             set => showFullscreen = value;
         }
 
-        // -1 previews all active groups; 0..2 isolate a group. Source preview defaults to Group 1.
+        // -1 previews all active groups; 0..5 isolate a group. Source preview defaults to Group 1.
         public int PreviewGroup
         {
             get => previewGroup;
@@ -114,7 +114,7 @@ namespace LayerAwareBloom
             for (int i = 0; i < GroupCount; i++)
                 groups[i] ??= new BloomGroupSettings
                 {
-                    name = $"Group {i + 1}", enabled = false, renderingLayers = (uint)(1 << (i + 1))
+                    name = $"Group {i + 1}", enabled = false, renderingLayers = 0
                 };
         }
 
@@ -135,14 +135,6 @@ namespace LayerAwareBloom
                 highQualityBlurMaterial.EnableKeyword("_LAYER_BLOOM_HQ");
             }
             bloomMaskPasses = new BloomMaskPass[GroupCount];
-            for (int i = 0; i < GroupCount; i++)
-            {
-                bloomMaskPasses[i] = new BloomMaskPass(i)
-                {
-                    renderPassEvent = RenderPassEvent.AfterRenderingOpaques,
-                    requiresIntermediateTexture = true
-                };
-            }
             bloomCompositePass = new BloomOutputPass(false)
             {
                 // A renderer scheduling point, independent of whether camera post-processing is enabled.
@@ -173,10 +165,17 @@ namespace LayerAwareBloom
             {
                 var group = groups[i];
                 if (!group.enabled || (uint)group.renderingLayers == 0 ||
-                    (enableBloom && group.intensity <= 0) ||
+                    (enableBloom && (group.intensity <= 0 || group.clamp <= 0 ||
+                        (group.tint.r <= 0 && group.tint.g <= 0 && group.tint.b <= 0))) ||
                     (showFullscreen && selectedPreview >= 0 && selectedPreview != i))
                     continue;
                 var filter = group.highQualityFiltering ? highQualityBlurMaterial : blurMaterial;
+                // Unconfigured/zero-output slots never allocate a pass or record a pyramid.
+                bloomMaskPasses[i] ??= new BloomMaskPass(i)
+                {
+                    renderPassEvent = RenderPassEvent.AfterRenderingOpaques,
+                    requiresIntermediateTexture = true
+                };
                 bloomMaskPasses[i].Setup(maskMaterial, group.renderingLayers, enableBloom ? filter : null,
                     group.scatter, group.maxIterations, group.downscale, group.threshold, group.clamp,
                     group.tint.linear * Mathf.Max(0, group.intensity));
@@ -493,22 +492,27 @@ namespace LayerAwareBloom
             private static readonly int PreviewSource = Shader.PropertyToID("_PreviewSource");
             private static readonly int GradingParameters = Shader.PropertyToID("_LayerGradingParams");
             private static readonly int GradingFilter = Shader.PropertyToID("_LayerGradingFilter");
-            private static readonly int BloomHighQuality = Shader.PropertyToID("_LayerBloomHighQuality");
+            private static readonly int BloomCount = Shader.PropertyToID("_LayerBloomCount");
             private static readonly int[] BloomTexelSizes =
             {
                 Shader.PropertyToID("_LayerBloomTexture0_TexelSize"),
                 Shader.PropertyToID("_LayerBloomTexture1_TexelSize"),
-                Shader.PropertyToID("_LayerBloomTexture2_TexelSize")
+                Shader.PropertyToID("_LayerBloomTexture2_TexelSize"),
+                Shader.PropertyToID("_LayerBloomTexture3_TexelSize"),
+                Shader.PropertyToID("_LayerBloomTexture4_TexelSize"),
+                Shader.PropertyToID("_LayerBloomTexture5_TexelSize")
             };
             private static readonly int[] BloomTextures =
             {
                 Shader.PropertyToID("_LayerBloomTexture0"), Shader.PropertyToID("_LayerBloomTexture1"),
-                Shader.PropertyToID("_LayerBloomTexture2")
+                Shader.PropertyToID("_LayerBloomTexture2"), Shader.PropertyToID("_LayerBloomTexture3"),
+                Shader.PropertyToID("_LayerBloomTexture4"), Shader.PropertyToID("_LayerBloomTexture5")
             };
             private static readonly int[] BloomWeights =
             {
                 Shader.PropertyToID("_LayerBloomWeight0"), Shader.PropertyToID("_LayerBloomWeight1"),
-                Shader.PropertyToID("_LayerBloomWeight2")
+                Shader.PropertyToID("_LayerBloomWeight2"), Shader.PropertyToID("_LayerBloomWeight3"),
+                Shader.PropertyToID("_LayerBloomWeight4"), Shader.PropertyToID("_LayerBloomWeight5")
             };
             private readonly bool preview;
             private Material material;
@@ -525,7 +529,7 @@ namespace LayerAwareBloom
                 public readonly TextureHandle[] bloom = new TextureHandle[GroupCount];
                 public readonly Vector4[] weights = new Vector4[GroupCount];
                 public readonly Vector4[] texelSizes = new Vector4[GroupCount];
-                public Vector4 highQuality;
+                public int bloomCount;
                 public Material material;
                 public int shaderPass;
                 public bool sourcePreview;
@@ -580,22 +584,29 @@ namespace LayerAwareBloom
                     data.sourcePreview = sourcePreview;
                     data.gradingParameters = gradingParameters;
                     data.gradingFilter = gradingFilter;
-                    data.highQuality = Vector4.zero;
+                    data.bloomCount = 0;
                     if (source.IsValid()) builder.UseTexture(source, AccessFlags.Read);
                     for (int i = 0; i < GroupCount; i++)
                     {
                         // PassData is pooled: always overwrite every slot, including inactive groups.
-                        bool include = !sourcePreview && bloom != null && (!preview || previewGroup < 0 || previewGroup == i);
-                        data.bloom[i] = include ? bloom.textures[i] : TextureHandle.nullHandle;
-                        data.weights[i] = include ? bloom.weights[i] : Vector4.zero;
+                        data.bloom[i] = TextureHandle.nullHandle;
+                        data.weights[i] = Vector4.zero;
                         data.texelSizes[i] = Vector4.one;
-                        if (data.bloom[i].IsValid())
+                    }
+                    for (int i = 0; i < GroupCount; i++)
+                    {
+                        bool include = !sourcePreview && bloom != null && (!preview || previewGroup < 0 || previewGroup == i);
+                        if (include && bloom.textures[i].IsValid())
                         {
-                            builder.UseTexture(data.bloom[i], AccessFlags.Read);
-                            var bloomDesc = graph.GetTextureDesc(data.bloom[i]);
-                            data.texelSizes[i] = new Vector4(1f / bloomDesc.width, 1f / bloomDesc.height,
+                            // Pack active groups contiguously; the shader stops before unused slots.
+                            int slot = data.bloomCount++;
+                            data.bloom[slot] = bloom.textures[i];
+                            data.weights[slot] = bloom.weights[i];
+                            data.weights[slot].w = bloom.highQuality[i] ? 1 : 0;
+                            builder.UseTexture(data.bloom[slot], AccessFlags.Read);
+                            var bloomDesc = graph.GetTextureDesc(data.bloom[slot]);
+                            data.texelSizes[slot] = new Vector4(1f / bloomDesc.width, 1f / bloomDesc.height,
                                 bloomDesc.width, bloomDesc.height);
-                            data.highQuality[i] = bloom.highQuality[i] ? 1 : 0;
                         }
                     }
                     builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
@@ -609,7 +620,7 @@ namespace LayerAwareBloom
                         properties.SetVector(GradingParameters, passData.gradingParameters);
                         // Already converted to linear in Setup; SetColor would convert it again.
                         properties.SetVector(GradingFilter, passData.gradingFilter);
-                        properties.SetVector(BloomHighQuality, passData.highQuality);
+                        properties.SetInteger(BloomCount, passData.bloomCount);
                         for (int i = 0; i < GroupCount; i++)
                         {
                             properties.SetTexture(BloomTextures[i], GetTexture(passData.bloom[i]));
