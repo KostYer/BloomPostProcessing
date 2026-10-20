@@ -33,7 +33,7 @@ namespace LayerAwareBloom.Editor
 
             EditorGUILayout.HelpBox(
                 "Each enabled group selects visible opaque surfaces through Rendering Layers and has its own HDR bloom pyramid. Objects matching several groups contribute to each; halos add together. Tint multiplies source RGB after filtering. " +
-                "Bloom is added to the scene before post-processing, so enabled color grading and tonemapping affect the combined image. Intensity scales the added bloom. " +
+                "Built-in post-processing is optional. Bloom is added to the scene before any enabled color grading or tonemapping. Intensity scales the added bloom. " +
                 "Disable Enable Bloom to restore the scene, or inspect the selected HDR source with the fullscreen preview. " +
                 "The fullscreen preview is bloom-only, after post-processing, without tone mapping; bright values can clip on screen. " +
                 "Enable HDR on the camera and URP asset. Standard opaque meshes only; custom vertex deformation is not supported yet.",

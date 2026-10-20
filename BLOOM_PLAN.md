@@ -17,6 +17,14 @@ These versions are the development baseline, not a promise of compatibility with
 
 ## Required behavior
 
+### Independence from built-in post-processing
+
+- The feature owns its settings, `LayerAwareBloom.BloomDownscale` enum, materials, filter passes, and composition. It does not read Volume settings or invoke Unity's built-in bloom, color grading, or tonemapping passes.
+- Bloom works with camera post-processing disabled. `BeforeRenderingPostProcessing` / `AfterRenderingPostProcessing` are renderer scheduling points, not calls into the post-processing stack. Other effects can optionally process the composed image afterward.
+- The filter math remains locally implemented and based on the previously verified URP Gaussian reference. Shared URP/SRP Core rendering APIs and shader utilities (RenderGraph, camera resources, blitting, sampling, color-space conversion) remain infrastructure dependencies.
+- Quality uses the feature-local `_LAYER_BLOOM_HQ` keyword. There is no dependency on the post-stack `_ENABLE_ALPHA_OUTPUT` keyword; extracted sources already contain selected RGB with alpha 1.
+- Downscale values remain Half=0 and Quarter=1 to preserve existing serialized settings. HDR grading is an optional scene/pipeline setting, not required to run this feature.
+
 ### Selection and group controls
 
 - Select meshes through their **Rendering Layers**, not GameObject Layers.

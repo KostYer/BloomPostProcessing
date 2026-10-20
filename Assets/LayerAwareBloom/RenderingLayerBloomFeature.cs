@@ -8,6 +8,13 @@ using UnityEngine.Serialization;
 
 namespace LayerAwareBloom
 {
+    // Feature-owned settings. Explicit values preserve existing serialized Half/Quarter selections.
+    public enum BloomDownscale
+    {
+        Half = 0,
+        Quarter = 1
+    }
+
     // Visible Rendering Layer selection, HDR source extraction, and URP Gaussian bloom.
     public sealed class RenderingLayerBloomFeature : ScriptableRendererFeature
     {
@@ -25,7 +32,7 @@ namespace LayerAwareBloom
             [Min(0)] public float clamp = 65472f;
             [Range(0, 1)] public float scatter = 0.7f;
             [Range(2, 8)] public int maxIterations = 6;
-            public BloomDownscaleMode downscale = BloomDownscaleMode.Half;
+            public BloomDownscale downscale = BloomDownscale.Half;
             public bool highQualityFiltering;
         }
 
@@ -43,7 +50,7 @@ namespace LayerAwareBloom
         [SerializeField, HideInInspector] private float clamp = 65472f;
         [SerializeField, HideInInspector] private float scatter = 0.7f;
         [SerializeField, HideInInspector] private int maxIterations = 6;
-        [SerializeField, HideInInspector] private BloomDownscaleMode downscale = BloomDownscaleMode.Half;
+        [SerializeField, HideInInspector] private BloomDownscale downscale = BloomDownscale.Half;
         [SerializeField, HideInInspector] private bool highQualityFiltering;
         [SerializeField, HideInInspector] private int previewGroup = -1;
 
@@ -109,7 +116,7 @@ namespace LayerAwareBloom
             if (blurMaterial != null)
             {
                 // Separate immutable variants avoid changing keywords between recorded draws.
-                highQualityBlurMaterial.EnableKeyword("_BLOOM_HQ");
+                highQualityBlurMaterial.EnableKeyword("_LAYER_BLOOM_HQ");
             }
             bloomMaskPasses = new BloomMaskPass[GroupCount];
             for (int i = 0; i < GroupCount; i++)
@@ -122,6 +129,7 @@ namespace LayerAwareBloom
             }
             bloomCompositePass = new BloomOutputPass(false)
             {
+                // A renderer scheduling point, independent of whether camera post-processing is enabled.
                 renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing,
                 requiresIntermediateTexture = true
             };
@@ -228,7 +236,7 @@ namespace LayerAwareBloom
             private Material filterMaterial;
             private float scatter;
             private int maxIterations;
-            private BloomDownscaleMode downscale;
+            private BloomDownscale downscale;
             private float threshold;
             private float clamp;
 
@@ -252,7 +260,7 @@ namespace LayerAwareBloom
             }
 
             public void Setup(Material maskMaterial, uint layerMask, Material blurMaterial,
-                float scatterValue, int iterations, BloomDownscaleMode scale, float thresholdValue, float clampValue, Color weight)
+                float scatterValue, int iterations, BloomDownscale scale, float thresholdValue, float clampValue, Color weight)
             {
                 this.maskMaterial = maskMaterial;
                 renderingLayerMask = layerMask;
@@ -348,7 +356,7 @@ namespace LayerAwareBloom
             private TextureHandle RecordBloomPyramid(RenderGraph renderGraph, TextureHandle source)
             {
                 var descriptor = renderGraph.GetTextureDesc(source);
-                int shift = downscale == BloomDownscaleMode.Quarter ? 2 : 1;
+                int shift = downscale == BloomDownscale.Quarter ? 2 : 1;
                 int width = Mathf.Max(1, descriptor.width >> shift);
                 int height = Mathf.Max(1, descriptor.height >> shift);
                 int iterations = Mathf.FloorToInt(Mathf.Log(Mathf.Max(width, height), 2f) - 1);

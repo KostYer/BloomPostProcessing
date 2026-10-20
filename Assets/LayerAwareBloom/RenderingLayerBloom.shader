@@ -127,8 +127,7 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment FragPrefilter
-            #pragma multi_compile_local_fragment _ _BLOOM_HQ
-            #pragma multi_compile_fragment _ _ENABLE_ALPHA_OUTPUT
+            #pragma multi_compile_local_fragment _ _LAYER_BLOOM_HQ
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/UnityInput.hlsl"
             #include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRendering.hlsl"
@@ -139,11 +138,7 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
             {
                 float2 texelSize = _BlitTexture_TexelSize.xy;
                 half4 color = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + texelSize * offset);
-                #if _ENABLE_ALPHA_OUTPUT
-                    // When alpha is enabled, regions with zero alpha should not generate any bloom / glow. Therefore we pre-multipy the color with the alpha channel here and the rest
-                    // of the computations remain float3. Still, when bloom is applied to the final image, bloom will still be spread on regions with zero alpha (see UberPost.compute)
-                    color.xyz *= color.w;
-                #endif
+                // Extraction already writes selected HDR RGB with alpha 1; no post-stack alpha keyword is needed.
                 return color.xyz;
             }
 
@@ -159,7 +154,7 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
                 }
             #endif
 
-            #if _BLOOM_HQ
+            #if _LAYER_BLOOM_HQ
                 half3 A = SamplePrefilter(uv, float2(-1.0, -1.0));
                 half3 B = SamplePrefilter(uv, float2( 0.0, -1.0));
                 half3 C = SamplePrefilter(uv, float2( 1.0, -1.0));
@@ -280,7 +275,7 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment FragUpsample
-            #pragma multi_compile_local_fragment _ _BLOOM_HQ
+            #pragma multi_compile_local_fragment _ _LAYER_BLOOM_HQ
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Filtering.hlsl"
             TEXTURE2D_X(_SourceTexLowMip);
             float4 _SourceTexLowMip_TexelSize;
@@ -291,7 +286,7 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
             {
                 half3 highMip = DecodeHDR(SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv));
 
-            #if _BLOOM_HQ
+            #if _LAYER_BLOOM_HQ
                 half3 lowMip = DecodeHDR(SampleTexture2DBicubic(TEXTURE2D_X_ARGS(_SourceTexLowMip, sampler_LinearClamp), uv, _SourceTexLowMip_TexelSize.zwxy, (1.0).xx, unity_StereoEyeIndex));
             #else
                 half3 lowMip = DecodeHDR(SAMPLE_TEXTURE2D_X(_SourceTexLowMip, sampler_LinearClamp, uv));
