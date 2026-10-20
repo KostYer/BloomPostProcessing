@@ -10,6 +10,7 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
         // URP 17.3 Bloom.shader: shared parameters and HDR encoding, kept inline for comparison.
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Filtering.hlsl"
 
         float4 _Params; // scatter, clamp, linear threshold, threshold knee
         #define Scatter       _Params.x
@@ -43,12 +44,30 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
         float4 _LayerBloomWeight0; // Linear tint RGB multiplied by group intensity.
         float4 _LayerBloomWeight1;
         float4 _LayerBloomWeight2;
+        float4 _LayerBloomTexture0_TexelSize;
+        float4 _LayerBloomTexture1_TexelSize;
+        float4 _LayerBloomTexture2_TexelSize;
+        float4 _LayerBloomHighQuality;
+
+        half3 SampleBloom(TEXTURE2D_X_PARAM(bloomTexture, bloomSampler),
+            float2 uv, float4 texelSize, float highQuality)
+        {
+            // Match URP's final reconstruction as well as its pyramid filtering.
+            uv = clamp(uv, texelSize.xy * 0.5, 1.0 - texelSize.xy * 0.5);
+            if (highQuality > 0.5)
+                return DecodeHDR(SampleTexture2DBicubic(TEXTURE2D_X_ARGS(bloomTexture, bloomSampler),
+                    uv, texelSize.zwxy, (1.0).xx, unity_StereoEyeIndex));
+            return DecodeHDR(SAMPLE_TEXTURE2D_X(bloomTexture, bloomSampler, uv));
+        }
 
         half3 CombinedBloom(float2 uv)
         {
-            half3 a = DecodeHDR(SAMPLE_TEXTURE2D_X(_LayerBloomTexture0, sampler_LinearClamp, uv));
-            half3 b = DecodeHDR(SAMPLE_TEXTURE2D_X(_LayerBloomTexture1, sampler_LinearClamp, uv));
-            half3 c = DecodeHDR(SAMPLE_TEXTURE2D_X(_LayerBloomTexture2, sampler_LinearClamp, uv));
+            half3 a = SampleBloom(TEXTURE2D_X_ARGS(_LayerBloomTexture0, sampler_LinearClamp),
+                uv, _LayerBloomTexture0_TexelSize, _LayerBloomHighQuality.x);
+            half3 b = SampleBloom(TEXTURE2D_X_ARGS(_LayerBloomTexture1, sampler_LinearClamp),
+                uv, _LayerBloomTexture1_TexelSize, _LayerBloomHighQuality.y);
+            half3 c = SampleBloom(TEXTURE2D_X_ARGS(_LayerBloomTexture2, sampler_LinearClamp),
+                uv, _LayerBloomTexture2_TexelSize, _LayerBloomHighQuality.z);
             return a * _LayerBloomWeight0.rgb + b * _LayerBloomWeight1.rgb + c * _LayerBloomWeight2.rgb;
         }
         ENDHLSL
@@ -334,17 +353,43 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
 
-            half4 FragComposite(Varyings input) : SV_Target
+            // Feature-owned grading: exposure multiplier, contrast, saturation, enabled.
+            float4 _LayerGradingParams;
+            float4 _LayerGradingFilter;
+
+            float3 GradeScene(float3 color)
+            {
+                if (_LayerGradingParams.w < 0.5)
+                    return color;
+
+                color = max(color * _LayerGradingParams.x * _LayerGradingFilter.rgb, 0.0);
+                const float3 luminanceWeights = float3(0.2126, 0.7152, 0.0722);
+                float luminance = dot(color, luminanceWeights);
+                // Power contrast around 18% gray, applied to luminance to retain RGB ratios.
+                // Black stays black; skip neutral contrast to avoid a needless log/pow round trip.
+                if (luminance > 0.0 && _LayerGradingParams.y != 1.0)
+                {
+                    float adjusted = 0.18 * pow(max(luminance / 0.18, 1e-6), _LayerGradingParams.y);
+                    color *= adjusted / max(luminance, 1e-6);
+                }
+                luminance = dot(color, luminanceWeights);
+                color = lerp(luminance.xxx, color, _LayerGradingParams.z);
+                // Keep HDR values above 1. Only bound to the finite half-float storage range.
+                return clamp(color, 0.0, 65504.0);
+            }
+
+            float4 FragComposite(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 float2 uv = UnityStereoTransformScreenSpaceTex(input.texcoord);
-                half4 scene = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+                float4 scene = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
                 half3 bloom = CombinedBloom(uv);
                 // Add light in linear space, then return to the camera texture's color space.
                 #if UNITY_COLORSPACE_GAMMA
                     scene.rgb = SRGBToLinear(scene.rgb);
                 #endif
                 scene.rgb += bloom;
+                scene.rgb = GradeScene(scene.rgb);
                 #if UNITY_COLORSPACE_GAMMA
                     scene.rgb = LinearToSRGB(scene.rgb);
                 #endif

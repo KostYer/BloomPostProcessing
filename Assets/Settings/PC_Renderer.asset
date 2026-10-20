@@ -75,7 +75,7 @@ MonoBehaviour:
     renderingLayers:
       serializedVersion: 0
       m_Bits: 2
-    threshold: 0.9
+    threshold: 1.31
     intensity: 1
     tint: {r: 1, g: 1, b: 1, a: 1}
     clamp: 65472
@@ -84,20 +84,20 @@ MonoBehaviour:
     downscale: 0
     highQualityFiltering: 1
   - name: Group 2
-    enabled: 0
+    enabled: 1
     renderingLayers:
       serializedVersion: 0
       m_Bits: 4
-    threshold: 0.9
+    threshold: 1.31
     intensity: 1
     tint: {r: 1, g: 1, b: 1, a: 1}
-    clamp: 65472
+    clamp: 1.31
     scatter: 0.7
     maxIterations: 6
     downscale: 0
     highQualityFiltering: 0
   - name: Group 3
-    enabled: 0
+    enabled: 1
     renderingLayers:
       serializedVersion: 0
       m_Bits: 8
@@ -109,6 +109,12 @@ MonoBehaviour:
     maxIterations: 6
     downscale: 0
     highQualityFiltering: 0
+  colorGrading:
+    enabled: 0
+    exposure: 0
+    contrast: 0
+    saturation: 0
+    colorFilter: {r: 1, g: 1, b: 1, a: 1}
   renderingLayers:
     serializedVersion: 0
     m_Bits: 2

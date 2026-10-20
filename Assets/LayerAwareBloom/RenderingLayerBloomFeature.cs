@@ -36,7 +36,22 @@ namespace LayerAwareBloom
             public bool highQualityFiltering;
         }
 
+        [System.Serializable]
+        public sealed class HdrColorGradingSettings
+        {
+            public bool enabled;
+            [Tooltip("Exposure in stops. +1 doubles brightness; -1 halves it.")]
+            [Range(-10, 10)] public float exposure;
+            [Tooltip("Luminance contrast around linear 18% gray. Zero is unchanged.")]
+            [Range(-100, 100)] public float contrast;
+            [Tooltip("-100 is grayscale; zero is unchanged.")]
+            [Range(-100, 100)] public float saturation;
+            [Tooltip("Multiplies the whole scene and bloom in linear space. White is unchanged.")]
+            [ColorUsage(false, false)] public Color colorFilter = Color.white;
+        }
+
         [SerializeField] private BloomGroupSettings[] groups;
+        [SerializeField] private HdrColorGradingSettings colorGrading = new();
         // Legacy fields migrate existing renderer assets into Group 1 on first load.
         [SerializeField, HideInInspector] private RenderingLayerMask renderingLayers = 1;
         [SerializeField, HideInInspector] private bool showFullscreen;
@@ -62,6 +77,7 @@ namespace LayerAwareBloom
         private BloomOutputPass fullscreenPreviewPass;
 
         public IReadOnlyList<BloomGroupSettings> Groups { get { EnsureGroups(); return groups; } }
+        public HdrColorGradingSettings ColorGrading => colorGrading ??= new HdrColorGradingSettings();
 
         public RenderingLayerMask RenderingLayers
         {
@@ -142,14 +158,14 @@ namespace LayerAwareBloom
             if (maskMaterial == null || cameraData.renderType != CameraRenderType.Base ||
                 (cameraData.cameraType != CameraType.Game && cameraData.cameraType != CameraType.SceneView))
                 return;
-            if (!enableBloom && !showFullscreen)
+            if (!enableBloom && !showFullscreen && !ColorGrading.enabled)
                 return;
 
             EnsureGroups();
             int selectedPreview = Mathf.Clamp(previewGroup, -1, GroupCount - 1);
             if (!enableBloom) selectedPreview = Mathf.Max(0, selectedPreview);
             bool anyGroup = false;
-            for (int i = 0; i < GroupCount; i++)
+            for (int i = 0; (enableBloom || showFullscreen) && i < GroupCount; i++)
             {
                 var group = groups[i];
                 if (!group.enabled || (uint)group.renderingLayers == 0 ||
@@ -168,9 +184,9 @@ namespace LayerAwareBloom
                 fullscreenPreviewPass.Setup(maskMaterial, !enableBloom, selectedPreview);
                 renderer.EnqueuePass(fullscreenPreviewPass);
             }
-            else if (anyGroup)
+            else if (anyGroup || ColorGrading.enabled)
             {
-                bloomCompositePass.Setup(maskMaterial, false, -1);
+                bloomCompositePass.Setup(maskMaterial, false, -1, ColorGrading);
                 renderer.EnqueuePass(bloomCompositePass);
             }
         }
@@ -190,12 +206,14 @@ namespace LayerAwareBloom
         {
             public readonly TextureHandle[] textures = new TextureHandle[GroupCount];
             public readonly Vector4[] weights = new Vector4[GroupCount];
+            public readonly bool[] highQuality = new bool[GroupCount];
             public override void Reset()
             {
                 for (int i = 0; i < GroupCount; i++)
                 {
                     textures[i] = TextureHandle.nullHandle;
                     weights[i] = Vector4.zero;
+                    highQuality[i] = false;
                 }
             }
         }
@@ -321,6 +339,8 @@ namespace LayerAwareBloom
                 var source = RecordSourceExtraction(renderGraph, resources.activeColorTexture, mask);
                 bloomFrameData.textures[groupIndex] = filterMaterial != null ? RecordBloomPyramid(renderGraph, source) : source;
                 bloomFrameData.weights[groupIndex] = weight;
+                bloomFrameData.highQuality[groupIndex] = filterMaterial != null &&
+                    filterMaterial.IsKeywordEnabled("_LAYER_BLOOM_HQ");
             }
 
             private TextureHandle RecordSourceExtraction(RenderGraph graph, TextureHandle cameraColor, TextureHandle mask)
@@ -467,6 +487,15 @@ namespace LayerAwareBloom
             private static readonly int BlitTexture = Shader.PropertyToID("_BlitTexture");
             private static readonly int BlitScaleBias = Shader.PropertyToID("_BlitScaleBias");
             private static readonly int PreviewSource = Shader.PropertyToID("_PreviewSource");
+            private static readonly int GradingParameters = Shader.PropertyToID("_LayerGradingParams");
+            private static readonly int GradingFilter = Shader.PropertyToID("_LayerGradingFilter");
+            private static readonly int BloomHighQuality = Shader.PropertyToID("_LayerBloomHighQuality");
+            private static readonly int[] BloomTexelSizes =
+            {
+                Shader.PropertyToID("_LayerBloomTexture0_TexelSize"),
+                Shader.PropertyToID("_LayerBloomTexture1_TexelSize"),
+                Shader.PropertyToID("_LayerBloomTexture2_TexelSize")
+            };
             private static readonly int[] BloomTextures =
             {
                 Shader.PropertyToID("_LayerBloomTexture0"), Shader.PropertyToID("_LayerBloomTexture1"),
@@ -481,6 +510,8 @@ namespace LayerAwareBloom
             private Material material;
             private bool sourcePreview;
             private int previewGroup;
+            private Vector4 gradingParameters;
+            private Color gradingFilter;
 
             public BloomOutputPass(bool preview) => this.preview = preview;
 
@@ -489,24 +520,37 @@ namespace LayerAwareBloom
                 public TextureHandle source;
                 public readonly TextureHandle[] bloom = new TextureHandle[GroupCount];
                 public readonly Vector4[] weights = new Vector4[GroupCount];
+                public readonly Vector4[] texelSizes = new Vector4[GroupCount];
+                public Vector4 highQuality;
                 public Material material;
                 public int shaderPass;
                 public bool sourcePreview;
+                public Vector4 gradingParameters;
+                public Color gradingFilter;
                 public readonly MaterialPropertyBlock properties = new();
             }
 
-            public void Setup(Material material, bool sourcePreview, int previewGroup)
+            public void Setup(Material material, bool sourcePreview, int previewGroup,
+                HdrColorGradingSettings grading = null)
             {
                 this.material = material;
                 this.sourcePreview = sourcePreview;
                 this.previewGroup = previewGroup;
+                bool grade = !preview && grading != null && grading.enabled;
+                gradingParameters = grade
+                    ? new Vector4(Mathf.Pow(2, Mathf.Clamp(grading.exposure, -10, 10)),
+                        1 + Mathf.Clamp(grading.contrast, -100, 100) * 0.01f,
+                        1 + Mathf.Clamp(grading.saturation, -100, 100) * 0.01f, 1)
+                    : new Vector4(1, 1, 1, 0);
+                gradingFilter = grade ? grading.colorFilter.linear : Color.white;
             }
 
             public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
             {
                 var bloom = frameData.Contains<BloomFrameData>() ? frameData.Get<BloomFrameData>() : null;
                 var resources = frameData.Get<UniversalResourceData>();
-                if (!preview && (bloom == null || resources.isActiveTargetBackBuffer))
+                if (!preview && (resources.isActiveTargetBackBuffer ||
+                    (bloom == null && gradingParameters.w == 0)))
                     return;
 
                 var destination = resources.activeColorTexture;
@@ -530,6 +574,9 @@ namespace LayerAwareBloom
                     data.material = material;
                     data.shaderPass = preview ? Preview : Composite;
                     data.sourcePreview = sourcePreview;
+                    data.gradingParameters = gradingParameters;
+                    data.gradingFilter = gradingFilter;
+                    data.highQuality = Vector4.zero;
                     if (source.IsValid()) builder.UseTexture(source, AccessFlags.Read);
                     for (int i = 0; i < GroupCount; i++)
                     {
@@ -537,7 +584,15 @@ namespace LayerAwareBloom
                         bool include = !sourcePreview && bloom != null && (!preview || previewGroup < 0 || previewGroup == i);
                         data.bloom[i] = include ? bloom.textures[i] : TextureHandle.nullHandle;
                         data.weights[i] = include ? bloom.weights[i] : Vector4.zero;
-                        if (data.bloom[i].IsValid()) builder.UseTexture(data.bloom[i], AccessFlags.Read);
+                        data.texelSizes[i] = Vector4.one;
+                        if (data.bloom[i].IsValid())
+                        {
+                            builder.UseTexture(data.bloom[i], AccessFlags.Read);
+                            var bloomDesc = graph.GetTextureDesc(data.bloom[i]);
+                            data.texelSizes[i] = new Vector4(1f / bloomDesc.width, 1f / bloomDesc.height,
+                                bloomDesc.width, bloomDesc.height);
+                            data.highQuality[i] = bloom.highQuality[i] ? 1 : 0;
+                        }
                     }
                     builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
                     builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
@@ -547,10 +602,15 @@ namespace LayerAwareBloom
                         properties.SetTexture(BlitTexture, GetTexture(passData.source));
                         properties.SetVector(BlitScaleBias, new Vector4(1, 1, 0, 0));
                         properties.SetFloat(PreviewSource, passData.sourcePreview ? 1 : 0);
+                        properties.SetVector(GradingParameters, passData.gradingParameters);
+                        // Already converted to linear in Setup; SetColor would convert it again.
+                        properties.SetVector(GradingFilter, passData.gradingFilter);
+                        properties.SetVector(BloomHighQuality, passData.highQuality);
                         for (int i = 0; i < GroupCount; i++)
                         {
                             properties.SetTexture(BloomTextures[i], GetTexture(passData.bloom[i]));
                             properties.SetVector(BloomWeights[i], passData.weights[i]);
+                            properties.SetVector(BloomTexelSizes[i], passData.texelSizes[i]);
                         }
                         context.cmd.DrawProcedural(Matrix4x4.identity, passData.material, passData.shaderPass,
                             MeshTopology.Triangles, 3, 1, properties);
