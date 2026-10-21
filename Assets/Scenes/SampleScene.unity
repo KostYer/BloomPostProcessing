@@ -2073,7 +2073,7 @@ MonoBehaviour:
   _rotspeedMin: 15
   _rotspeedMax: 90
   _movementspeedMax: 3
-  _maxDistance: 10
+  _maxDistance: 3
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

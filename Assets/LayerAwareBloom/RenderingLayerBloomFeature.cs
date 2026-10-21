@@ -569,6 +569,9 @@ namespace LayerAwareBloom
                 {
                     var descriptor = graph.GetTextureDesc(source);
                     descriptor.name = "Rendering Layer Bloom Scene Composite";
+                    // Preserve smooth scene + glow gradients through subsequent grading/tonemapping.
+                    // Reusing the camera's packed HDR format here introduces another coarse rounding step.
+                    descriptor.format = GraphicsFormat.R16G16B16A16_SFloat;
                     descriptor.msaaSamples = MSAASamples.None;
                     descriptor.bindTextureMS = false;
                     descriptor.clearBuffer = false;

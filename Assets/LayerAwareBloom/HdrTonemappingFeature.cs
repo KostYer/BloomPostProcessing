@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
@@ -93,6 +94,10 @@ namespace LayerAwareBloom
                 var source = resources.activeColorTexture;
                 var descriptor = graph.GetTextureDesc(source);
                 descriptor.name = "HDR Tonemapping Output";
+                // Do not inherit the camera's packed R11G11B10 HDR format here. Its coarse
+                // mantissa quantizes the mapped glow gradients before the final display conversion.
+                // Keep the SDR result in FP16 until the final blit; this also retains alpha.
+                descriptor.format = GraphicsFormat.R16G16B16A16_SFloat;
                 descriptor.msaaSamples = MSAASamples.None;
                 descriptor.bindTextureMS = false;
                 descriptor.clearBuffer = false;
