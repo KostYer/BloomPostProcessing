@@ -14,12 +14,23 @@ public class SceneController : MonoBehaviour
     [Tooltip("Maximum distance of each cube's center from the pivot in world units.")]
     [SerializeField, Min(0f)] private float _maxDistance = 10f;
 
+    [Tooltip("Camera to orbit around the pivot. Uses the Main Camera when unassigned.")]
+    [SerializeField] private Camera _orbitCamera;
+    [Tooltip("Camera orbit speed in degrees per second. Negative values reverse direction.")]
+    [SerializeField] private float _cameraOrbitSpeed = 10f;
+
     private readonly List<CubeMotion> _motions = new List<CubeMotion>();
+    private Vector3 _cameraStartOffset;
+    private float _cameraOrbitAngle;
+    private bool _cameraRotating = true;
 
     private sealed class CubeMotion
     {
         public Transform Cube;
-        public Vector3 Direction;
+        public Vector3 OrbitRight;
+        public Vector3 OrbitForward;
+        public float OrbitRadius;
+        public float OrbitAngle;
         public float MoveSpeed;
         public Vector3 RotationAxis;
         public float RotationSpeed;
@@ -27,23 +38,37 @@ public class SceneController : MonoBehaviour
 
     private void Start()
     {
+        Vector3 center = _pivot != null ? _pivot.position : transform.position;
+        if (_orbitCamera == null)
+            _orbitCamera = Camera.main;
+
+        if (_orbitCamera != null)
+            _cameraStartOffset = _orbitCamera.transform.position - center;
+
         if (_cubes == null)
             return;
 
+        float radius = Mathf.Max(0f, _maxDistance);
         var initializedCubes = new HashSet<Transform>();
         foreach (Transform cube in _cubes)
         {
             if (cube == null || cube == _pivot || cube == transform || !initializedCubes.Add(cube))
                 continue;
 
-            _motions.Add(new CubeMotion
+            // A random plane and a volume-weighted radius distribute cubes inside the sphere.
+            Quaternion orbitRotation = Random.rotation;
+            var motion = new CubeMotion
             {
                 Cube = cube,
-                Direction = Random.onUnitSphere,
+                OrbitRight = orbitRotation * Vector3.right,
+                OrbitForward = orbitRotation * Vector3.forward,
+                OrbitRadius = radius * Mathf.Pow(Random.value, 1f / 3f),
                 MoveSpeed = RandomSpeed(_moveSpeedMin, _moveSpeedMax),
                 RotationAxis = Random.onUnitSphere,
                 RotationSpeed = RandomSpeed(_rotspeedMin, _rotspeedMax)
-            });
+            };
+            cube.position = center + motion.OrbitRight * motion.OrbitRadius;
+            _motions.Add(motion);
         }
     }
 
@@ -61,26 +86,50 @@ public class SceneController : MonoBehaviour
             float speed = _movementspeedMax > 0f
                 ? Mathf.Min(motion.MoveSpeed, _movementspeedMax)
                 : motion.MoveSpeed;
-            Vector3 position = motion.Cube.position + motion.Direction * (speed * deltaTime);
-            Vector3 offset = position - center;
+            float orbitRadius = Mathf.Min(motion.OrbitRadius, radius);
 
-            if (radius == 0f)
-            {
-                position = center;
-            }
-            else if (offset.sqrMagnitude > radius * radius)
-            {
-                Vector3 normal = offset.normalized;
-                position = center + normal * radius;
+            // Angular speed = linear speed / radius, so each cube travels at a constant speed.
+            if (orbitRadius > 0f)
+                motion.OrbitAngle = Mathf.Repeat(
+                    motion.OrbitAngle + speed / orbitRadius * deltaTime, Mathf.PI * 2f);
 
-                // Only bounce outward motion, including when the pivot has moved.
-                if (Vector3.Dot(motion.Direction, normal) > 0f)
-                    motion.Direction = Vector3.Reflect(motion.Direction, normal);
-            }
-
-            motion.Cube.position = position;
+            Vector3 orbitDirection = motion.OrbitRight * Mathf.Cos(motion.OrbitAngle)
+                + motion.OrbitForward * Mathf.Sin(motion.OrbitAngle);
+            motion.Cube.position = center + orbitDirection * orbitRadius;
             motion.Cube.Rotate(motion.RotationAxis, motion.RotationSpeed * deltaTime, Space.World);
         }
+    }
+
+    private void LateUpdate()
+    {
+        if (_orbitCamera == null || _cameraStartOffset.sqrMagnitude < 0.000001f)
+            return;
+
+        Transform cameraTransform = _orbitCamera.transform;
+        if (cameraTransform == _pivot || cameraTransform == transform)
+            return;
+
+        Vector3 center = _pivot != null ? _pivot.position : transform.position;
+        if (_cameraRotating)
+            _cameraOrbitAngle = Mathf.Repeat(_cameraOrbitAngle + _cameraOrbitSpeed * Time.deltaTime, 360f);
+        Vector3 offset = Quaternion.AngleAxis(_cameraOrbitAngle, Vector3.up) * _cameraStartOffset;
+        cameraTransform.position = center + offset;
+
+        // Keep the pivot in view while preserving the starting orbit radius and height.
+        Vector3 up = Mathf.Abs(Vector3.Dot(offset.normalized, Vector3.up)) > 0.999f
+            ? Vector3.forward
+            : Vector3.up;
+        cameraTransform.LookAt(center, up);
+    }
+
+    private void OnGUI()
+    {
+        if (_orbitCamera == null)
+            return;
+
+        string label = _cameraRotating ? "Stop Rotation" : "Rotate";
+        if (GUI.Button(new Rect(16f, 16f, 160f, 40f), label))
+            _cameraRotating = !_cameraRotating;
     }
 
     private static float RandomSpeed(float minimum, float maximum)
