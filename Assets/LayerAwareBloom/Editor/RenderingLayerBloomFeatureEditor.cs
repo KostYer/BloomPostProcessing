@@ -60,12 +60,12 @@ namespace LayerAwareBloom.Editor
             }
 
             EditorGUILayout.HelpBox(
-                "Each enabled group selects visible opaque surfaces through Rendering Layers and has its own HDR bloom pyramid. Objects matching several groups contribute to each; halos add together. Tint multiplies source RGB after filtering. " +
+                "Each enabled group selects opaque surfaces and transparent renderers through Rendering Layers and has its own HDR bloom pyramid. Objects matching several groups contribute to each; halos add together. Tint multiplies source RGB after filtering. " +
                 "Disabled groups, empty layer masks, and zero-output bloom settings are skipped before rendering. " +
                 "Built-in post-processing is optional. Bloom is added to the scene before any enabled color grading or tonemapping. Intensity scales the added bloom. " +
                 "Disable Enable Bloom to remove glow; color grading has its own switch. Inspect the selected HDR source with the fullscreen preview. " +
                 "The fullscreen preview is bloom-only, after post-processing, without tone mapping; bright values can clip on screen. " +
-                "Enable HDR on the camera and URP asset. Standard opaque meshes only; custom vertex deformation is not supported yet.",
+                "Enable HDR on the camera and URP asset. Assign the Rendering Layer to the VFX's child renderers as well. Transparent materials retain their alpha and emission; opaque custom vertex deformation is not supported yet.",
                 MessageType.Info);
 
             if (serializedObject.ApplyModifiedProperties())

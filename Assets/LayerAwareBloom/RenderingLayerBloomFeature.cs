@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -173,7 +174,9 @@ namespace LayerAwareBloom
                 // Unconfigured/zero-output slots never allocate a pass or record a pyramid.
                 bloomMaskPasses[i] ??= new BloomMaskPass(i)
                 {
-                    renderPassEvent = RenderPassEvent.AfterRenderingOpaques,
+                    // Opaque color/depth copies must exist for soft particles and distortion.
+                    // Capture before normal transparents so unselected VFX cannot leak into the source.
+                    renderPassEvent = RenderPassEvent.BeforeRenderingTransparents,
                     requiresIntermediateTexture = true
                 };
                 bloomMaskPasses[i].Setup(maskMaterial, group.renderingLayers, enableBloom ? filter : null,
@@ -231,6 +234,7 @@ namespace LayerAwareBloom
             {
                 this.groupIndex = groupIndex;
                 groupLabel = $"Rendering Layer Bloom Group {groupIndex + 1}";
+                ConfigureInput(ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Color);
             }
             private static readonly List<ShaderTagId> ShaderTags = new()
             {
@@ -251,6 +255,8 @@ namespace LayerAwareBloom
             private static readonly int LowMipTexelSize = Shader.PropertyToID("_SourceTexLowMip_TexelSize");
             private static readonly int Parameters = Shader.PropertyToID("_Params");
             private static readonly int SelectionMask = Shader.PropertyToID("_SelectionMask");
+            private static readonly int DrawObjectPassData = Shader.PropertyToID("_DrawObjectPassData");
+            private static readonly int AlphaToMaskAvailable = Shader.PropertyToID("_AlphaToMaskAvailable");
 
             private readonly TextureHandle[] downsamplePyramid = new TextureHandle[MaxPyramidLevels];
             private readonly TextureHandle[] upsamplePyramid = new TextureHandle[MaxPyramidLevels];
@@ -339,19 +345,64 @@ namespace LayerAwareBloom
 
                 // Select full-resolution HDR color BEFORE any spatial filtering. Filtering camera color
                 // first would allow bright unselected neighbours to leak into selected source pixels.
-                var source = RecordSourceExtraction(renderGraph, resources.activeColorTexture, mask);
+                var source = RecordSourceExtraction(renderGraph, resources.activeColorTexture, mask,
+                    descriptor.msaaSamples);
+                RecordTransparentSource(renderGraph, source, resources, rendering, camera, lights);
                 bloomFrameData.textures[groupIndex] = filterMaterial != null ? RecordBloomPyramid(renderGraph, source) : source;
                 bloomFrameData.weights[groupIndex] = weight;
                 bloomFrameData.highQuality[groupIndex] = filterMaterial != null &&
                     filterMaterial.IsKeywordEnabled("_LAYER_BLOOM_HQ");
             }
 
-            private TextureHandle RecordSourceExtraction(RenderGraph graph, TextureHandle cameraColor, TextureHandle mask)
+            private void RecordTransparentSource(RenderGraph graph, TextureHandle source,
+                UniversalResourceData resources, UniversalRenderingData rendering,
+                UniversalCameraData camera, UniversalLightData lights)
+            {
+                // Retain each material's vertex animation, texture alpha, HDR emission and blend mode.
+                // An override silhouette would turn particle billboards into solid glowing rectangles.
+                var drawing = RenderingUtils.CreateDrawingSettings(
+                    ShaderTags, rendering, camera, lights, SortingCriteria.CommonTransparent);
+                var filtering = new FilteringSettings(RenderQueueRange.transparent, -1, renderingLayerMask);
+                // These Temp arrays stay alive until Render Graph creates the native renderer list.
+                var tags = new NativeArray<ShaderTagId>(1, Allocator.Temp);
+                var states = new NativeArray<RenderStateBlock>(1, Allocator.Temp);
+                tags[0] = ShaderTagId.none;
+                states[0] = new RenderStateBlock(RenderStateMask.Depth)
+                {
+                    // Never alter camera depth while drawing the extra bloom source.
+                    depthState = new DepthState(false, CompareFunction.LessEqual)
+                };
+                var rendererList = graph.CreateRendererList(new RendererListParams(
+                    rendering.cullResults, drawing, filtering)
+                {
+                    tagValues = tags, stateBlocks = states, isPassTagName = false
+                });
+                using var builder = graph.AddRasterRenderPass<PassData>(
+                    $"{groupLabel} Transparent HDR Source", out var data);
+                data.rendererList = rendererList;
+                builder.UseRendererList(rendererList);
+                // Original shaders may sample camera depth/color, shadows, and other URP globals.
+                builder.UseAllGlobalTextures(true);
+                builder.SetRenderAttachment(source, 0, AccessFlags.ReadWrite);
+                builder.SetRenderAttachmentDepth(resources.activeDepthTexture, AccessFlags.Read);
+                builder.AllowGlobalStateModification(true);
+                builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
+                {
+                    // Match URP's transparent draw globals instead of inheriting opaque-pass state.
+                    context.cmd.SetGlobalVector(DrawObjectPassData, Vector4.zero);
+                    context.cmd.SetGlobalFloat(AlphaToMaskAvailable, 0);
+                    context.cmd.DrawRendererList(passData.rendererList);
+                });
+            }
+
+            private TextureHandle RecordSourceExtraction(RenderGraph graph, TextureHandle cameraColor,
+                TextureHandle mask, MSAASamples samples)
             {
                 var descriptor = graph.GetTextureDesc(cameraColor);
                 descriptor.name = $"{groupLabel} HDR Source";
                 descriptor.format = GraphicsFormat.R16G16B16A16_SFloat;
-                descriptor.msaaSamples = MSAASamples.None;
+                // The transparent draw shares camera depth, so its color sample count must match.
+                descriptor.msaaSamples = samples;
                 descriptor.bindTextureMS = false;
                 descriptor.clearBuffer = false;
                 descriptor.filterMode = FilterMode.Bilinear;
