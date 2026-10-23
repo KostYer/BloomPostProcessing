@@ -71,7 +71,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LayerAwareBloom.HdrTonemappingFeature
   m_Active: 1
   tonemappingShader: {fileID: 4800000, guid: 71f853b300010444fb17e864f50a825d, type: 3}
-  mode: 2
+  mode: 1
 --- !u!114 &7823412291645092100
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -92,7 +92,7 @@ MonoBehaviour:
       serializedVersion: 0
       m_Bits: 2
     threshold: 1
-    intensity: 1
+    intensity: 3.03
     tint: {r: 1, g: 1, b: 1, a: 1}
     clamp: 65472
     scatter: 0.7
