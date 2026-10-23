@@ -60,7 +60,7 @@ namespace LayerAwareBloom.Editor
             }
 
             EditorGUILayout.HelpBox(
-                "Each enabled group selects opaque surfaces and transparent renderers through Rendering Layers and has its own HDR bloom pyramid. Objects matching several groups contribute to each; halos add together. Tint multiplies source RGB after filtering. " +
+                "Each enabled group selects opaque surfaces and transparent renderers through Rendering Layers and has its own HDR bloom pyramid. A renderer matching several active groups contributes only to the first, in inspector order. Group previews preserve that ownership. Tint multiplies source RGB after filtering. " +
                 "Disabled groups, empty layer masks, and zero-output bloom settings are skipped before rendering. " +
                 "Built-in post-processing is optional. Bloom is added to the scene before any enabled color grading or tonemapping. Intensity scales the added bloom. " +
                 "Disable Enable Bloom to remove glow; color grading has its own switch. Inspect the selected HDR source with the fullscreen preview. " +

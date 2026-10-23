@@ -21,7 +21,11 @@ The package runs in this order regardless of the order of these two features in 
 
 Bloom-only and source debug previews intentionally replace the output afterward and remain untonemapped.
 
-New slots start disabled with no Rendering Layers assigned. Existing slot settings are preserved when upgrading from three slots. Disabled slots, empty layer masks, zero intensity, zero clamp, and black tint skip mask/source/pyramid rendering. Active results are packed for the final blend, which stops sampling at the active count. Raw source previews ignore intensity, clamp, and tint. An enabled layer mask with no visible matching objects is still rendered; this optimization does not scan the scene or read back masks.
+New slots start disabled with no Rendering Layers assigned. Existing slot settings are preserved when upgrading from three slots. Disabled slots, empty layer masks, zero intensity, zero clamp, and black tint skip mask/source/pyramid rendering. Active results are packed for the final blend, which stops sampling at the active count. Raw source previews ignore intensity, clamp, and tint. An enabled layer mask with no visible matching objects is still rendered; no mask readback is used to detect empty groups.
+
+Each renderer contributes to only the **first matching active group**, in inspector order. For example, a renderer on Light Layer 1 and Light Layer 2 belongs to Group 1 if Group 1 selects Light Layer 1, even when Group 2 selects Light Layer 2. Disabled and zero-output bloom groups do not claim renderers. Isolating a group in the preview preserves this assignment; raw source preview ignores output settings as described above.
+
+With multiple groups, the feature checks renderer membership once per camera. A later group with overlapping renderers gets a separate culling result that excludes those already assigned. Renderer visibility is restored immediately, before drawing; materials and Rendering Layer Masks are not changed. This preserves normal scene lighting and transparent material behavior, at the cost of additional CPU culling for groups that overlap. Single-group rendering uses the normal camera culling result.
 
 ## Integration
 

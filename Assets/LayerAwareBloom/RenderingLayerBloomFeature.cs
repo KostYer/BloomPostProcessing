@@ -76,6 +76,9 @@ namespace LayerAwareBloom
         private BloomMaskPass[] bloomMaskPasses;
         private BloomOutputPass bloomCompositePass;
         private BloomOutputPass fullscreenPreviewPass;
+        private ScriptableRenderContext currentContext;
+        private Camera contextCamera;
+        private readonly List<Renderer> temporarilyHidden = new();
 
         public IReadOnlyList<BloomGroupSettings> Groups { get { EnsureGroups(); return groups; } }
         public HdrColorGradingSettings ColorGrading => colorGrading ??= new HdrColorGradingSettings();
@@ -121,6 +124,8 @@ namespace LayerAwareBloom
 
         public override void Create()
         {
+            RenderPipelineManager.beginCameraRendering -= CaptureContext;
+            RenderPipelineManager.beginCameraRendering += CaptureContext;
             EnsureGroups();
             CoreUtils.Destroy(maskMaterial);
             CoreUtils.Destroy(blurMaterial);
@@ -149,6 +154,25 @@ namespace LayerAwareBloom
             };
         }
 
+        private void CaptureContext(ScriptableRenderContext context, Camera camera)
+        {
+            currentContext = context;
+            contextCamera = camera;
+        }
+
+        private static Renderer[] CollectCameraRenderers(Camera camera)
+        {
+            // Preview/prefab scenes are not returned by FindObjectsByType.
+            if (camera.scene.IsValid())
+            {
+                var renderers = new List<Renderer>();
+                foreach (var root in camera.scene.GetRootGameObjects())
+                    renderers.AddRange(root.GetComponentsInChildren<Renderer>());
+                return renderers.ToArray();
+            }
+            return Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+        }
+
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             var cameraData = renderingData.cameraData;
@@ -162,14 +186,51 @@ namespace LayerAwareBloom
             int selectedPreview = Mathf.Clamp(previewGroup, -1, GroupCount - 1);
             if (!enableBloom) selectedPreview = Mathf.Max(0, selectedPreview);
             bool anyGroup = false;
+            uint earlierLayers = 0;
+            Renderer[] cameraRenderers = null;
             for (int i = 0; (enableBloom || showFullscreen) && i < GroupCount; i++)
             {
                 var group = groups[i];
                 if (!group.enabled || (uint)group.renderingLayers == 0 ||
                     (enableBloom && (group.intensity <= 0 || group.clamp <= 0 ||
-                        (group.tint.r <= 0 && group.tint.g <= 0 && group.tint.b <= 0))) ||
-                    (showFullscreen && selectedPreview >= 0 && selectedPreview != i))
+                        (group.tint.r <= 0 && group.tint.g <= 0 && group.tint.b <= 0))))
                     continue;
+                uint excludedLayers = earlierLayers;
+                earlierLayers |= (uint)group.renderingLayers;
+                // Previewing a later group must not reassign objects owned by an earlier group.
+                if (showFullscreen && selectedPreview >= 0 && selectedPreview != i) continue;
+
+                var groupCulling = renderingData.cullResults;
+                bool customCulling = false;
+                if (excludedLayers != 0 && contextCamera == cameraData.camera)
+                {
+                    cameraRenderers ??= CollectCameraRenderers(cameraData.camera);
+                    temporarilyHidden.Clear();
+                    try
+                    {
+                        foreach (var candidate in cameraRenderers)
+                        {
+                            if (!candidate.enabled || candidate.forceRenderingOff ||
+                                (candidate.renderingLayerMask & excludedLayers) == 0 ||
+                                (candidate.renderingLayerMask & (uint)group.renderingLayers) == 0) continue;
+                            temporarilyHidden.Add(candidate);
+                            candidate.forceRenderingOff = true;
+                        }
+                        if (temporarilyHidden.Count > 0 && cameraData.camera.TryGetCullingParameters(out var parameters))
+                        {
+                            renderer.SetupCullingParameters(ref parameters, ref cameraData);
+                            parameters.cullingOptions &= ~CullingOptions.ShadowCasters;
+                            groupCulling = currentContext.Cull(ref parameters);
+                            customCulling = true;
+                        }
+                    }
+                    finally
+                    {
+                        foreach (var candidate in temporarilyHidden)
+                            if (candidate != null) candidate.forceRenderingOff = false;
+                        temporarilyHidden.Clear();
+                    }
+                }
                 var filter = group.highQualityFiltering ? highQualityBlurMaterial : blurMaterial;
                 // Unconfigured/zero-output slots never allocate a pass or record a pyramid.
                 bloomMaskPasses[i] ??= new BloomMaskPass(i)
@@ -181,7 +242,7 @@ namespace LayerAwareBloom
                 };
                 bloomMaskPasses[i].Setup(maskMaterial, group.renderingLayers, enableBloom ? filter : null,
                     group.scatter, group.maxIterations, group.downscale, group.threshold, group.clamp,
-                    group.tint.linear * Mathf.Max(0, group.intensity));
+                    group.tint.linear * Mathf.Max(0, group.intensity), groupCulling, customCulling);
                 renderer.EnqueuePass(bloomMaskPasses[i]);
                 anyGroup = true;
             }
@@ -199,6 +260,7 @@ namespace LayerAwareBloom
 
         protected override void Dispose(bool disposing)
         {
+            RenderPipelineManager.beginCameraRendering -= CaptureContext;
             CoreUtils.Destroy(maskMaterial);
             CoreUtils.Destroy(blurMaterial);
             CoreUtils.Destroy(highQualityBlurMaterial);
@@ -269,6 +331,8 @@ namespace LayerAwareBloom
 
             private Material maskMaterial;
             private uint renderingLayerMask;
+            private CullingResults groupCulling;
+            private bool customCulling;
 
             private sealed class PassData
             {
@@ -287,7 +351,8 @@ namespace LayerAwareBloom
             }
 
             public void Setup(Material maskMaterial, uint layerMask, Material blurMaterial,
-                float scatterValue, int iterations, BloomDownscale scale, float thresholdValue, float clampValue, Color weight)
+                float scatterValue, int iterations, BloomDownscale scale, float thresholdValue, float clampValue, Color weight,
+                CullingResults groupCulling, bool customCulling)
             {
                 this.maskMaterial = maskMaterial;
                 renderingLayerMask = layerMask;
@@ -298,6 +363,8 @@ namespace LayerAwareBloom
                 threshold = Mathf.Max(0, thresholdValue);
                 clamp = Mathf.Max(0, clampValue);
                 this.weight = weight;
+                this.groupCulling = groupCulling;
+                this.customCulling = customCulling;
             }
 
             public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -308,6 +375,7 @@ namespace LayerAwareBloom
                 var camera = frameData.Get<UniversalCameraData>();
                 var rendering = frameData.Get<UniversalRenderingData>();
                 var lights = frameData.Get<UniversalLightData>();
+                if (customCulling) CopyLightingIndices(rendering.cullResults, groupCulling);
 
                 // Match depth dimensions and sample count so the attachments are compatible.
                 var descriptor = renderGraph.GetTextureDesc(resources.activeDepthTexture);
@@ -328,7 +396,7 @@ namespace LayerAwareBloom
                 drawing.overrideMaterialPassIndex = 0;
                 var filtering = new FilteringSettings(RenderQueueRange.opaque, -1, renderingLayerMask);
                 var rendererList = renderGraph.CreateRendererList(
-                    new RendererListParams(rendering.cullResults, drawing, filtering));
+                    new RendererListParams(groupCulling, drawing, filtering));
 
                 using (var builder = renderGraph.AddRasterRenderPass<PassData>(
                     $"{groupLabel} Mask", out var data))
@@ -354,6 +422,37 @@ namespace LayerAwareBloom
                     filterMaterial.IsKeywordEnabled("_LAYER_BLOOM_HQ");
             }
 
+            private static void CopyLightingIndices(CullingResults cameraCulling, CullingResults selectedCulling)
+            {
+                // URP's light/probe buffers use the original camera's indices.
+                using var originalLights = cameraCulling.GetLightIndexMap(Allocator.Temp);
+                using var selectedLightStorage = selectedCulling.GetLightIndexMap(Allocator.Temp);
+                var selectedLights = selectedLightStorage;
+                var cameraLights = cameraCulling.visibleLights;
+                var groupLights = selectedCulling.visibleLights;
+                for (int i = 0; i < selectedLights.Length; i++)
+                {
+                    selectedLights[i] = -1;
+                    for (int j = 0; j < cameraLights.Length; j++)
+                        if (groupLights[i].light == cameraLights[j].light)
+                        { selectedLights[i] = originalLights[j]; break; }
+                }
+                selectedCulling.SetLightIndexMap(selectedLights);
+                using var originalProbes = cameraCulling.GetReflectionProbeIndexMap(Allocator.Temp);
+                using var selectedProbeStorage = selectedCulling.GetReflectionProbeIndexMap(Allocator.Temp);
+                var selectedProbes = selectedProbeStorage;
+                var cameraProbes = cameraCulling.visibleReflectionProbes;
+                var groupProbes = selectedCulling.visibleReflectionProbes;
+                for (int i = 0; i < selectedProbes.Length; i++)
+                {
+                    selectedProbes[i] = -1;
+                    for (int j = 0; j < cameraProbes.Length; j++)
+                        if (groupProbes[i].reflectionProbe == cameraProbes[j].reflectionProbe)
+                        { selectedProbes[i] = originalProbes[j]; break; }
+                }
+                selectedCulling.SetReflectionProbeIndexMap(selectedProbes);
+            }
+
             private void RecordTransparentSource(RenderGraph graph, TextureHandle source,
                 UniversalResourceData resources, UniversalRenderingData rendering,
                 UniversalCameraData camera, UniversalLightData lights)
@@ -373,7 +472,7 @@ namespace LayerAwareBloom
                     depthState = new DepthState(false, CompareFunction.LessEqual)
                 };
                 var rendererList = graph.CreateRendererList(new RendererListParams(
-                    rendering.cullResults, drawing, filtering)
+                    groupCulling, drawing, filtering)
                 {
                     tagValues = tags, stateBlocks = states, isPassTagName = false
                 });

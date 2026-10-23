@@ -105,6 +105,7 @@ namespace LayerAwareBloom.Editor
                 Require(selected[Size / 2 * Size + Size / 2 + 55].maxColorComponent < .001f,
                     "Transparent billboard corners remain black");
                 Save("Temp/BloomParticleSource.png", selected);
+                VerifyGroupOwnership(feature, particleRenderer, camera, rt, "transparent particle");
 
                 material.SetColor("_BaseColor", new Color(8, 2, 1, .5f));
                 float alphaRatio = Capture(camera, rt).Max(c => c.r) / selected.Max(c => c.r);
@@ -145,6 +146,7 @@ namespace LayerAwareBloom.Editor
                 opaqueMaterial.SetColor("_BaseColor", new Color(4, 1, 1, 1));
                 var opaqueSource = Capture(camera, rt);
                 Require(opaqueSource.Max(c => c.r) > 2, "Opaque HDR source still works");
+                VerifyGroupOwnership(feature, blocker.GetComponent<Renderer>(), camera, rt, "opaque mesh");
                 particlesObject.SetActive(true);
                 particlesObject.transform.position = new Vector3(0, 0, -2);
                 particleRenderer.renderingLayerMask = 1;
@@ -153,11 +155,28 @@ namespace LayerAwareBloom.Editor
                     "Unselected transparent foreground cannot contaminate opaque source");
                 particlesObject.SetActive(false);
                 blocker.SetActive(false);
+                VerifyLitTransparency(feature, camera, rt, scene, opaqueMaterial);
 
                 const string prefabPath = "Assets/Vefects/Free Fire VFX URP/Particles/VFX_Fire_Floor_01.prefab";
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
                 if (prefab != null)
                 {
+                    Require(prefab.GetComponentsInChildren<Transform>(true).All(t =>
+                        GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(t.gameObject) == 0),
+                        "Fire prefab has no missing scripts");
+                    var fireMaterials = prefab.GetComponentsInChildren<Renderer>(true)
+                        .SelectMany(r => r.sharedMaterials).Where(m => m != null).Distinct().ToArray();
+                    Require(fireMaterials.Length == 4 && fireMaterials.All(m =>
+                        m.shader != null && m.shader.isSupported && !ShaderUtil.ShaderHasError(m.shader)),
+                        "All four fire materials and their shaders are valid");
+                    Require(prefab.GetComponentsInChildren<AudioSource>(true).All(a => a.clip != null),
+                        "Fire audio references are intact");
+                    Require(prefab.GetComponentsInChildren<ParticleSystem>(true)
+                        .Where(p => p.lights.enabled).All(p => p.lights.light != null),
+                        "Particle light templates are intact");
+                    Require(prefab.GetComponentsInChildren<Renderer>(true)
+                        .All(r => (r.renderingLayerMask & 2) != 0),
+                        "Fire prefab children are configured for bloom");
                     var fire = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
                     foreach (var r in fire.GetComponentsInChildren<Renderer>(true)) r.renderingLayerMask = 2;
                     foreach (var p in fire.GetComponentsInChildren<ParticleSystem>(true))
@@ -195,6 +214,121 @@ namespace LayerAwareBloom.Editor
             var serialized = new SerializedObject(feature);
             serialized.FindProperty("enableBloom").boolValue = enabled;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        static void VerifyGroupOwnership(RenderingLayerBloomFeature feature, Renderer target,
+            Camera camera, RenderTexture rt, string label)
+        {
+            var first = feature.Groups[0];
+            var second = feature.Groups[1];
+            string savedSecond = JsonUtility.ToJson(second);
+            uint savedLayers = target.renderingLayerMask;
+            try
+            {
+                JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(first), second);
+                second.enabled = true;
+                second.renderingLayers = 4;
+                target.renderingLayerMask = 6;
+                feature.PreviewGroup = 0;
+                Require(Capture(camera, rt).Max(c => c.r) > 1, label + " belongs to first matching group");
+                feature.PreviewGroup = 1;
+                Require(Capture(camera, rt).Max(c => c.r) < .001f, label + " excluded from later matching group");
+                Require(!target.forceRenderingOff && target.renderingLayerMask == 6,
+                    label + " visibility and lighting layers restored");
+                target.renderingLayerMask = 4;
+                Require(Capture(camera, rt).Max(c => c.r) > 1, label + " exclusive second-group membership works");
+                target.renderingLayerMask = 6;
+                first.enabled = false;
+                Require(Capture(camera, rt).Max(c => c.r) > 1, label + " falls back when first group is disabled");
+                first.enabled = true;
+                second.renderingLayers = 2;
+                Require(Capture(camera, rt).Max(c => c.r) < .001f, label + " identical group masks do not duplicate");
+
+                second.renderingLayers = 4;
+                feature.PreviewGroup = -1;
+                SetBloom(feature, true);
+                second.enabled = false;
+                var singleGroupBloom = Capture(camera, rt);
+                second.enabled = true;
+                var bothGroupsBloom = Capture(camera, rt);
+                Require(bothGroupsBloom.Zip(singleGroupBloom, (a, b) => Mathf.Abs(a.r - b.r)).Max() < .001f,
+                    label + " combined bloom is unchanged by overlapping second group");
+                float savedIntensity = first.intensity;
+                first.intensity = 0;
+                var fallbackBloom = Capture(camera, rt);
+                first.intensity = savedIntensity;
+                Require(fallbackBloom.Zip(singleGroupBloom, (a, b) => Mathf.Abs(a.r - b.r)).Max() < .001f,
+                    label + " zero-output first group allows second-group bloom");
+
+                // Also compare the visible scene, not just the isolated source/bloom previews.
+                feature.ShowFullscreen = false;
+                second.enabled = false;
+                var singleGroupScene = Capture(camera, rt);
+                second.enabled = true;
+                var bothGroupsScene = Capture(camera, rt);
+                Require(bothGroupsScene.Zip(singleGroupScene, (a, b) => Mathf.Abs(a.r - b.r)).Max() < .001f,
+                    label + " normal camera rendering is preserved");
+            }
+            finally
+            {
+                first.enabled = true;
+                JsonUtility.FromJsonOverwrite(savedSecond, second);
+                target.renderingLayerMask = savedLayers;
+                feature.PreviewGroup = 0;
+                feature.ShowFullscreen = true;
+                SetBloom(feature, false);
+            }
+        }
+
+        static void VerifyLitTransparency(RenderingLayerBloomFeature feature, Camera camera,
+            RenderTexture rt, Scene scene, Material unlitMaterial)
+        {
+            var second = feature.Groups[1];
+            string savedSecond = JsonUtility.ToJson(second);
+            var material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            var overlap = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var lightObject = new GameObject("Bloom Test Light");
+            foreach (var go in new[] { sphere, overlap, lightObject }) SceneManager.MoveGameObjectToScene(go, scene);
+            try
+            {
+                JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(feature.Groups[0]), second);
+                second.enabled = true; second.renderingLayers = 4;
+                feature.PreviewGroup = 1;
+                material.SetColor("_BaseColor", Color.white);
+                material.SetFloat("_Surface", 1);
+                material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+                material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+                material.SetFloat("_ZWrite", 0);
+                material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                material.renderQueue = (int)RenderQueue.Transparent;
+                sphere.transform.position = new Vector3(1, 0, 0);
+                sphere.GetComponent<Renderer>().sharedMaterial = material;
+                sphere.GetComponent<Renderer>().renderingLayerMask = 4;
+                overlap.transform.position = new Vector3(-1, 0, 0);
+                overlap.GetComponent<Renderer>().sharedMaterial = unlitMaterial;
+                overlap.GetComponent<Renderer>().renderingLayerMask = 2;
+                var light = lightObject.AddComponent<Light>();
+                light.type = LightType.Point; light.range = 8; light.intensity = 20;
+                light.renderingLayerMask = -1;
+                light.GetUniversalAdditionalLightData().renderingLayers = uint.MaxValue;
+                lightObject.transform.position = new Vector3(1, 0, -2);
+                var regularCulling = Capture(camera, rt);
+                overlap.GetComponent<Renderer>().renderingLayerMask = 6;
+                var exclusiveCulling = Capture(camera, rt);
+                Require(regularCulling.Max(c => c.r) > .05f, "Transparent lit material receives light");
+                Require(exclusiveCulling.Zip(regularCulling, (a, b) => Mathf.Abs(a.r - b.r)).Max() < .001f,
+                    "Overlap exclusion preserves lighting on other transparent renderers");
+            }
+            finally
+            {
+                JsonUtility.FromJsonOverwrite(savedSecond, second);
+                feature.PreviewGroup = 0;
+                UnityEngine.Object.DestroyImmediate(sphere);
+                UnityEngine.Object.DestroyImmediate(overlap);
+                UnityEngine.Object.DestroyImmediate(lightObject);
+                UnityEngine.Object.DestroyImmediate(material);
+            }
         }
 
         static Color[] Capture(Camera camera, RenderTexture target)
