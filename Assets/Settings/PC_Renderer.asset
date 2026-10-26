@@ -92,7 +92,7 @@ MonoBehaviour:
       serializedVersion: 0
       m_Bits: 2
     threshold: 1
-    intensity: 3.03
+    intensity: 2
     tint: {r: 1, g: 1, b: 1, a: 1}
     clamp: 65472
     scatter: 0.7
@@ -105,7 +105,7 @@ MonoBehaviour:
       serializedVersion: 0
       m_Bits: 4
     threshold: 1
-    intensity: 1
+    intensity: 2
     tint: {r: 1, g: 1, b: 1, a: 1}
     clamp: 65472
     scatter: 0.7
@@ -175,6 +175,8 @@ MonoBehaviour:
     m_Bits: 2
   showFullscreen: 0
   bloomShader: {fileID: 4800000, guid: 7bf614eb4e2a4ab3a94f0c558a626850, type: 3}
+  uiBloomShader: {fileID: 4800000, guid: c3cf349646c99cd419deb8dbdc008ac5, type: 3}
+  uiNativeShader: {fileID: 4800000, guid: dc26f2912ecc4d1dafa4ec301fc0823e, type: 3}
   enableBloom: 1
   threshold: 0.9
   intensity: 1

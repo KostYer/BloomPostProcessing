@@ -20,6 +20,8 @@ namespace LayerAwareBloom.Editor
         {
             serializedObject.Update();
             EditorGUILayout.PropertyField(serializedObject.FindProperty("bloomShader"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("uiBloomShader"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("uiNativeShader"));
             EditorGUILayout.Space();
             var blur = serializedObject.FindProperty("enableBloom");
             EditorGUILayout.PropertyField(blur);

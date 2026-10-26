@@ -29,6 +29,22 @@ With multiple groups, the feature checks renderer membership once per camera. A 
 
 ## Integration
 
+### Canvas UI
+
+Add **UI Bloom Source** (Add Component > Rendering) to an Image, Raw Image, legacy Text, or parent Canvas. Choose the same **Rendering Layers** as a bloom group. **Include Children** applies the selection to descendants; the closest applicable component wins. A child component with an empty mask, or a disabled component, opts its subtree out of inherited bloom. **Emission Multiplier** increases brightness only in the HDR bloom source, leaving the normal UI unchanged. Start with 2–4 for a white PNG and a group threshold of 1.
+
+Supported render modes are **Screen Space - Camera** (with its Render Camera assigned) and **World Space**, on supported base cameras. **Screen Space - Overlay is ignored.** UI uses the same first-active-group ownership as meshes, including preview behavior and fallback when an earlier group is disabled or has zero output.
+
+The UI capture supports **UI/Default** Image, RawImage, and legacy Text geometry, including sprite alpha, filled/sliced images, renderer/Graphic/CanvasGroup alpha, RectMask2D clipping and softness, and nested sprite-alpha Masks. Unsupported graphics (including TextMeshPro/SDF text and custom UI shaders) do not support UI bloom selection or occlusion; their native rendering can still contribute to a group selecting the Default rendering layer. The component inspector warns about these. UI Toolkit is outside this uGUI integration.
+
+Each group replays supported UI back-to-front into its HDR source before thresholding/blur. Unselected UI draws zero RGB with its original alpha, attenuating sources behind it. Masks use a private stencil attachment and do not modify the camera stencil or original materials. Opaque camera depth occludes UI; transparent scene renderers are not interleaved with this UI replay. For World Space UI intersecting transparent meshes/particles, that ordering remains a limitation. Blur can extend beyond a mask boundary after the source has been clipped, as with other bloom sources.
+
+The native Canvas draw uses an internal material wrapper that reuses Unity's **UI/Default** pass. It is installed after uGUI rebuilds materials, before Canvas batching, and prevents native UI from leaking into the scene source or being counted twice on the Default rendering layer. User materials and Graphic material assignments remain unchanged. CanvasRenderer bindings are restored when the feature is disabled or disposed.
+
+UI capture adds Canvas material/batch updates, CPU geometry/property collection once per camera, extra UI draws for each active group, and mask push/pop draws for each masked element. Keep large UI hierarchies and many active bloom groups in mind when profiling. The serialized **UI Bloom Shader** and **UI Native Shader** references on the renderer feature keep both shaders included in builds.
+
+Run **Tools > Layer Aware Bloom > Verify UI Sources** for the UI render regression. It uses a temporary preview scene, restores settings, and writes reports/images under `Temp/`.
+
 Transparent particles and meshes are drawn into each group's HDR source using their original materials, back-to-front, with camera depth testing and depth writes disabled. Texture alpha, additive blending, vertex animation, and emission are preserved. Assign the group's Rendering Layer to every relevant child Particle System Renderer or Mesh Renderer; assigning it only to an empty VFX parent does not select the visible children. Soft particles and distortion have access to URP's depth and opaque-color textures.
 
 Opaque selection is captured before normal transparency rendering, so unselected particles cannot contaminate selected opaque colors. Only selected transparent renderers participate in the source's transparency blending; unselected transparent foregrounds do not attenuate bloom, and refractive shaders can include background color from the camera opaque texture. Opaque objects still occlude transparent sources. Each active group adds a transparent renderer-list draw in addition to its existing mask and blur passes.

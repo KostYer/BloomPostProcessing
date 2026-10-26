@@ -58,6 +58,8 @@ namespace LayerAwareBloom
         [SerializeField, HideInInspector] private bool showFullscreen;
         [FormerlySerializedAs("silhouetteShader")]
         [SerializeField] private Shader bloomShader;
+        [SerializeField] private Shader uiBloomShader;
+        [SerializeField] private Shader uiNativeShader;
         [FormerlySerializedAs("blurSilhouette")]
         [FormerlySerializedAs("blurMask")]
         [SerializeField] private bool enableBloom = true;
@@ -73,6 +75,7 @@ namespace LayerAwareBloom
         private Material maskMaterial;
         private Material blurMaterial;
         private Material highQualityBlurMaterial;
+        private UIBloomCapture uiCapture;
         private BloomMaskPass[] bloomMaskPasses;
         private BloomOutputPass bloomCompositePass;
         private BloomOutputPass fullscreenPreviewPass;
@@ -126,8 +129,16 @@ namespace LayerAwareBloom
         {
             RenderPipelineManager.beginCameraRendering -= CaptureContext;
             RenderPipelineManager.beginCameraRendering += CaptureContext;
+            // Register after uGUI's material rebuild callback, before native Canvas batching.
+            _ = UnityEngine.UI.CanvasUpdateRegistry.instance;
+            Canvas.willRenderCanvases -= PrepareUI;
+            Canvas.willRenderCanvases += PrepareUI;
             EnsureGroups();
             CoreUtils.Destroy(maskMaterial);
+            uiCapture?.Dispose();
+            if (uiBloomShader == null) uiBloomShader = Shader.Find("Hidden/LayerAwareBloom/UIBloomSource");
+            if (uiNativeShader == null) uiNativeShader = Shader.Find("Hidden/LayerAwareBloom/UIBloomNative");
+            uiCapture = new UIBloomCapture(uiBloomShader, uiNativeShader);
             CoreUtils.Destroy(blurMaterial);
             CoreUtils.Destroy(highQualityBlurMaterial);
             if (bloomShader == null)
@@ -158,6 +169,12 @@ namespace LayerAwareBloom
         {
             currentContext = context;
             contextCamera = camera;
+        }
+
+        private void PrepareUI()
+        {
+            if (isActive && (enableBloom || showFullscreen)) uiCapture?.PrepareNativeUI();
+            else uiCapture?.RestoreNativeMaterials();
         }
 
         private static Renderer[] CollectCameraRenderers(Camera camera)
@@ -242,7 +259,8 @@ namespace LayerAwareBloom
                 };
                 bloomMaskPasses[i].Setup(maskMaterial, group.renderingLayers, enableBloom ? filter : null,
                     group.scatter, group.maxIterations, group.downscale, group.threshold, group.clamp,
-                    group.tint.linear * Mathf.Max(0, group.intensity), groupCulling, customCulling);
+                    group.tint.linear * Mathf.Max(0, group.intensity), groupCulling, customCulling,
+                    uiCapture, groups, enableBloom);
                 renderer.EnqueuePass(bloomMaskPasses[i]);
                 anyGroup = true;
             }
@@ -261,6 +279,9 @@ namespace LayerAwareBloom
         protected override void Dispose(bool disposing)
         {
             RenderPipelineManager.beginCameraRendering -= CaptureContext;
+            Canvas.willRenderCanvases -= PrepareUI;
+            uiCapture?.Dispose();
+            uiCapture = null;
             CoreUtils.Destroy(maskMaterial);
             CoreUtils.Destroy(blurMaterial);
             CoreUtils.Destroy(highQualityBlurMaterial);
@@ -333,6 +354,9 @@ namespace LayerAwareBloom
             private uint renderingLayerMask;
             private CullingResults groupCulling;
             private bool customCulling;
+            private UIBloomCapture uiCapture;
+            private IReadOnlyList<BloomGroupSettings> groups;
+            private bool bloomEnabled;
 
             private sealed class PassData
             {
@@ -352,7 +376,8 @@ namespace LayerAwareBloom
 
             public void Setup(Material maskMaterial, uint layerMask, Material blurMaterial,
                 float scatterValue, int iterations, BloomDownscale scale, float thresholdValue, float clampValue, Color weight,
-                CullingResults groupCulling, bool customCulling)
+                CullingResults groupCulling, bool customCulling, UIBloomCapture uiCapture,
+                IReadOnlyList<BloomGroupSettings> groups, bool bloomEnabled)
             {
                 this.maskMaterial = maskMaterial;
                 renderingLayerMask = layerMask;
@@ -365,6 +390,9 @@ namespace LayerAwareBloom
                 this.weight = weight;
                 this.groupCulling = groupCulling;
                 this.customCulling = customCulling;
+                this.uiCapture = uiCapture;
+                this.groups = groups;
+                this.bloomEnabled = bloomEnabled;
             }
 
             public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -416,6 +444,7 @@ namespace LayerAwareBloom
                 var source = RecordSourceExtraction(renderGraph, resources.activeColorTexture, mask,
                     descriptor.msaaSamples);
                 RecordTransparentSource(renderGraph, source, resources, rendering, camera, lights);
+                uiCapture?.Record(renderGraph, frameData, source, groupIndex, groups, bloomEnabled);
                 bloomFrameData.textures[groupIndex] = filterMaterial != null ? RecordBloomPyramid(renderGraph, source) : source;
                 bloomFrameData.weights[groupIndex] = weight;
                 bloomFrameData.highQuality[groupIndex] = filterMaterial != null &&
@@ -463,10 +492,16 @@ namespace LayerAwareBloom
                     ShaderTags, rendering, camera, lights, SortingCriteria.CommonTransparent);
                 var filtering = new FilteringSettings(RenderQueueRange.transparent, -1, renderingLayerMask);
                 // These Temp arrays stay alive until Render Graph creates the native renderer list.
-                var tags = new NativeArray<ShaderTagId>(1, Allocator.Temp);
-                var states = new NativeArray<RenderStateBlock>(1, Allocator.Temp);
-                tags[0] = ShaderTagId.none;
+                var tags = new NativeArray<ShaderTagId>(2, Allocator.Temp);
+                var states = new NativeArray<RenderStateBlock>(2, Allocator.Temp);
+                tags[0] = new ShaderTagId("true");
                 states[0] = new RenderStateBlock(RenderStateMask.Depth)
+                {
+                    // Canvas UI is captured separately, even when a group selects the default layer.
+                    depthState = new DepthState(false, CompareFunction.Never)
+                };
+                tags[1] = ShaderTagId.none;
+                states[1] = new RenderStateBlock(RenderStateMask.Depth)
                 {
                     // Never alter camera depth while drawing the extra bloom source.
                     depthState = new DepthState(false, CompareFunction.LessEqual)
@@ -474,6 +509,7 @@ namespace LayerAwareBloom
                 var rendererList = graph.CreateRendererList(new RendererListParams(
                     groupCulling, drawing, filtering)
                 {
+                    tagName = new ShaderTagId(UIBloomCapture.MaterialTag),
                     tagValues = tags, stateBlocks = states, isPassTagName = false
                 });
                 using var builder = graph.AddRasterRenderPass<PassData>(
