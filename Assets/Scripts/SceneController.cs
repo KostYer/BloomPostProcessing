@@ -1,9 +1,12 @@
 using System.Collections.Generic;
+using LayerAwareBloom;
+using TMPro;
 using UnityEngine;
 
 public class SceneController : MonoBehaviour
 {
     [SerializeField] private Transform _pivot;
+    [Tooltip("Movement roots. Only each root's child mesh rotates.")]
     [SerializeField] private List<Transform> _cubes = new List<Transform>();
     [SerializeField, Min(0f)] private float _moveSpeedMin = 0.5f;
     [SerializeField, Min(0f)] private float _moveSpeedMax = 2f;
@@ -19,14 +22,28 @@ public class SceneController : MonoBehaviour
     [Tooltip("Camera orbit speed in degrees per second. Negative values reverse direction.")]
     [SerializeField] private float _cameraOrbitSpeed = 10f;
 
+    [Header("Bloom cycle")]
+    [SerializeField] private RenderingLayerBloomFeature _bloomFeature;
+    [SerializeField] private bool _cycleBloom = true;
+    [Tooltip("Seconds each bloom group stays disabled before moving to the next.")]
+    [SerializeField, Min(0.1f)] private float _bloomCycleInterval = 3f;
+
     private readonly List<CubeMotion> _motions = new List<CubeMotion>();
     private Vector3 _cameraStartOffset;
     private float _cameraOrbitAngle;
     private bool _cameraRotating = true;
+    private readonly List<RenderingLayerBloomFeature.BloomGroupSettings> _cycleGroups = new();
+    private int _disabledBloomGroup = -1;
+    private float _bloomCycleElapsed;
 
     private sealed class CubeMotion
     {
         public Transform Cube;
+        public Transform Mesh;
+        public MeshRenderer Renderer;
+        public TMP_Text[] Labels;
+        public bool[] OriginalLabelVisibility;
+        public bool[] OriginalLabelActive;
         public Vector3 OrbitRight;
         public Vector3 OrbitForward;
         public float OrbitRadius;
@@ -57,9 +74,14 @@ public class SceneController : MonoBehaviour
 
             // A random plane and a volume-weighted radius distribute cubes inside the sphere.
             Quaternion orbitRotation = Random.rotation;
+            MeshRenderer meshRenderer = cube.GetComponentInChildren<MeshRenderer>(true);
             var motion = new CubeMotion
             {
                 Cube = cube,
+                Mesh = meshRenderer != null && meshRenderer.transform != cube
+                    ? meshRenderer.transform : null,
+                Renderer = meshRenderer,
+                Labels = cube.GetComponentsInChildren<TMP_Text>(true),
                 OrbitRight = orbitRotation * Vector3.right,
                 OrbitForward = orbitRotation * Vector3.forward,
                 OrbitRadius = radius * Mathf.Pow(Random.value, 1f / 3f),
@@ -67,13 +89,22 @@ public class SceneController : MonoBehaviour
                 RotationAxis = Random.onUnitSphere,
                 RotationSpeed = RandomSpeed(_rotspeedMin, _rotspeedMax)
             };
+            motion.OriginalLabelVisibility = new bool[motion.Labels.Length];
+            motion.OriginalLabelActive = new bool[motion.Labels.Length];
+            for (int i = 0; i < motion.Labels.Length; i++)
+            {
+                motion.OriginalLabelVisibility[i] = motion.Labels[i].enabled;
+                motion.OriginalLabelActive[i] = motion.Labels[i].gameObject.activeSelf;
+            }
             cube.position = center + motion.OrbitRight * motion.OrbitRadius;
             _motions.Add(motion);
         }
+        StartBloomCycle();
     }
 
     private void Update()
     {
+        UpdateBloomCycle();
         Vector3 center = _pivot != null ? _pivot.position : transform.position;
         float radius = Mathf.Max(0f, _maxDistance);
         float deltaTime = Time.deltaTime;
@@ -96,12 +127,125 @@ public class SceneController : MonoBehaviour
             Vector3 orbitDirection = motion.OrbitRight * Mathf.Cos(motion.OrbitAngle)
                 + motion.OrbitForward * Mathf.Sin(motion.OrbitAngle);
             motion.Cube.position = center + orbitDirection * orbitRadius;
-            motion.Cube.Rotate(motion.RotationAxis, motion.RotationSpeed * deltaTime, Space.World);
+            if (motion.Mesh != null)
+                motion.Mesh.Rotate(motion.RotationAxis, motion.RotationSpeed * deltaTime, Space.World);
         }
+    }
+
+    private void OnEnable()
+    {
+        // Start handles the first enable, after the cube references are cached.
+        if (_motions.Count > 0)
+            StartBloomCycle();
+    }
+
+    private void OnDisable()
+    {
+        StopBloomCycle();
+        foreach (CubeMotion motion in _motions)
+            for (int i = 0; i < motion.Labels.Length; i++)
+                if (motion.Labels[i] != null)
+                {
+                    motion.Labels[i].enabled = motion.OriginalLabelVisibility[i];
+                    motion.Labels[i].gameObject.SetActive(motion.OriginalLabelActive[i]);
+                }
+    }
+
+    private void StartBloomCycle()
+    {
+        if (!_cycleBloom || _bloomFeature == null || _cycleGroups.Count > 0)
+            return;
+
+        // Only cycle groups that were enabled originally; leave other settings alone.
+        foreach (var group in _bloomFeature.Groups)
+            if (group.enabled && (uint)group.renderingLayers != 0)
+                _cycleGroups.Add(group);
+
+        if (_cycleGroups.Count == 0)
+            return;
+
+        _bloomCycleElapsed = 0f;
+        _disabledBloomGroup = -1;
+        AdvanceBloomCycle();
+    }
+
+    private void UpdateBloomCycle()
+    {
+        if (!_cycleBloom || _bloomFeature == null)
+        {
+            StopBloomCycle();
+            return;
+        }
+
+        StartBloomCycle();
+        if (_cycleGroups.Count == 0)
+            return;
+
+        _bloomCycleElapsed += Time.deltaTime;
+        float interval = Mathf.Max(0.1f, _bloomCycleInterval);
+        if (_bloomCycleElapsed >= interval)
+        {
+            _bloomCycleElapsed %= interval;
+            AdvanceBloomCycle();
+        }
+    }
+
+    private void AdvanceBloomCycle()
+    {
+        if (_disabledBloomGroup >= 0)
+            _cycleGroups[_disabledBloomGroup].enabled = true;
+        _disabledBloomGroup = (_disabledBloomGroup + 1) % _cycleGroups.Count;
+        _cycleGroups[_disabledBloomGroup].enabled = false;
+    }
+
+    private void UpdateBloomLabels()
+    {
+        if (_bloomFeature == null)
+            return;
+
+        uint enabledLayers = 0;
+        if (_bloomFeature.isActive)
+            foreach (var group in _bloomFeature.Groups)
+                if (group.enabled && group.intensity > 0f)
+                    enabledLayers |= (uint)group.renderingLayers;
+
+        foreach (CubeMotion motion in _motions)
+        {
+            if (motion.Renderer == null)
+                continue;
+
+            uint layers = motion.Renderer.renderingLayerMask;
+            // Read the actual mesh mask each frame, not the cube's list index or
+            // the last cycle selection. Any enabled matching group supplies bloom.
+            bool noBloom = (layers & enabledLayers) == 0;
+            foreach (TMP_Text label in motion.Labels)
+                if (label != null)
+                {
+                    label.enabled = noBloom;
+                    if (label.gameObject.activeSelf != noBloom)
+                        label.gameObject.SetActive(noBloom);
+                }
+        }
+    }
+
+    private void StopBloomCycle()
+    {
+        if (_cycleGroups.Count == 0)
+            return;
+
+        // Renderer-feature settings are assets: restore them when leaving Play mode
+        // or disabling this component so the demo never leaves a group switched off.
+        foreach (var group in _cycleGroups)
+            group.enabled = true;
+        _cycleGroups.Clear();
+        _disabledBloomGroup = -1;
+        _bloomCycleElapsed = 0f;
     }
 
     private void LateUpdate()
     {
+        UpdateBloomLabels();
+
         if (_orbitCamera == null || _cameraStartOffset.sqrMagnitude < 0.000001f)
             return;
 

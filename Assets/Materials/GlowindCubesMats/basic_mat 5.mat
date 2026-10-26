@@ -98,7 +98,10 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
+    - _EdgeStrength: 0.55
+    - _EdgeWidth: 0.022
     - _EnvironmentReflections: 1
+    - _FaceShading: 0.35
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
@@ -120,7 +123,8 @@ Material:
     m_Colors:
     - _BaseColor: {r: 0, g: 0, b: 0, a: 1}
     - _Color: {r: 0, g: 0, b: 0, a: 1}
-    - _EmissionColor: {r: 1.8443027, g: 0.18269035, b: 1.2527338, a: 1}
+    - _EdgeColor: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 1.4980394, g: 0.13536005, b: 0.049463592, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

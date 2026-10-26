@@ -92,7 +92,7 @@ MonoBehaviour:
       serializedVersion: 0
       m_Bits: 2
     threshold: 1
-    intensity: 2
+    intensity: 3
     tint: {r: 1, g: 1, b: 1, a: 1}
     clamp: 65472
     scatter: 0.7
@@ -105,7 +105,7 @@ MonoBehaviour:
       serializedVersion: 0
       m_Bits: 4
     threshold: 1
-    intensity: 2
+    intensity: 3
     tint: {r: 1, g: 1, b: 1, a: 1}
     clamp: 65472
     scatter: 0.7
@@ -118,7 +118,7 @@ MonoBehaviour:
       serializedVersion: 0
       m_Bits: 8
     threshold: 1
-    intensity: 1
+    intensity: 3
     tint: {r: 1, g: 1, b: 1, a: 1}
     clamp: 65472
     scatter: 0.7
@@ -131,7 +131,7 @@ MonoBehaviour:
       serializedVersion: 0
       m_Bits: 16
     threshold: 1
-    intensity: 1
+    intensity: 3
     tint: {r: 1, g: 1, b: 1, a: 1}
     clamp: 65472
     scatter: 0.7
@@ -144,7 +144,7 @@ MonoBehaviour:
       serializedVersion: 0
       m_Bits: 32
     threshold: 1
-    intensity: 1
+    intensity: 3
     tint: {r: 1, g: 1, b: 1, a: 1}
     clamp: 65472
     scatter: 0.7
@@ -157,7 +157,7 @@ MonoBehaviour:
       serializedVersion: 0
       m_Bits: 64
     threshold: 1
-    intensity: 1
+    intensity: 3
     tint: {r: 1, g: 1, b: 1, a: 1}
     clamp: 65472
     scatter: 0.7
