@@ -29,6 +29,10 @@ With multiple groups, the feature checks renderer membership once per camera. A 
 
 ## Integration
 
+### Assigning a VFX hierarchy
+
+Add **Rendering Layer Assigner** to the effect root, select its **Rendering Layers**, and press **Apply to Root and Children**. This replaces the mask on every Renderer in the hierarchy, including inactive children, particle renderers, VFX Graph renderers, and meshes. Include any lighting layers you want to retain in the selected mask. The button supports Undo and prefab instance overrides. It runs only when pressed; newly added children require another Apply. GameObject layers and Light components are unaffected.
+
 ### Canvas UI
 
 Add **UI Bloom Source** (Add Component > Rendering) to an Image, Raw Image, legacy Text, or parent Canvas. Choose the same **Rendering Layers** as a bloom group. **Include Children** applies the selection to descendants; the closest applicable component wins. A child component with an empty mask, or a disabled component, opts its subtree out of inherited bloom. **Emission Multiplier** increases brightness only in the HDR bloom source, leaving the normal UI unchanged. Start with 2–4 for a white PNG and a group threshold of 1.
