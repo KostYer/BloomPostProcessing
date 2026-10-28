@@ -113,7 +113,7 @@ Material:
     - _Dst1: 10
     - _DstBlend: 1
     - _Emissive: 50
-    - _EmissiveIntensity: 33
+    - _EmissiveIntensity: 6.13
     - _Emissive_Amount: 10
     - _EnableFogOnTransparent: 1
     - _Global_Speed: -2
