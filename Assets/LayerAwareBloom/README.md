@@ -7,6 +7,26 @@ This package contains two independent URP renderer features:
 
 Add them from your Universal Renderer asset's **Add Renderer Feature** menu. HDR Tonemapping works on its own and does not require the bloom feature, a Volume, or the camera's Post Processing checkbox.
 
+## Project layout
+
+The bloom package and its examples live under `Assets/LayerAwareBloom/`:
+
+```text
+LayerAwareBloom/
+  Runtime/                 Renderer features and source components
+  Shaders/                 Bloom, tonemapping, and UI capture shaders
+  Editor/Inspectors/       Custom inspectors and authoring tools
+  Editor/Verification/     Explicitly invoked rendering checks
+  Samples/
+    Scenes/                BloomGroups and BloomSources demos
+    Scripts/               Demo movement, labels, and bloom cycling
+    Materials/             Named demo materials, GlowingCubes, and Sky
+    Shaders/               EmissionOnly demo shader
+    Models/, Sprites/, Fonts/
+```
+
+Project-wide pipeline assets are in `Assets/Settings/Rendering/` (DesktopRenderer, DesktopPipeline, MobileRenderer, MobilePipeline). Volume profiles and input actions are under `Assets/Settings/Volumes/` and `Assets/Settings/Input/`. The imported fire effects are in `Assets/ThirdParty/VFX/`. Unity's TextMesh Pro and tutorial folders retain their standard layouts.
+
 ## Standalone setup
 
 1. Enable HDR on the URP asset and camera.

@@ -32,7 +32,7 @@ namespace LayerAwareBloom.Editor
         [MenuItem("Tools/Layer Aware Bloom/Verify Transparent Sources")]
         public static void Run()
         {
-            var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>("Assets/Settings/PC_Renderer.asset");
+            var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>("Assets/Settings/Rendering/DesktopRenderer.asset");
             var feature = renderer.rendererFeatures.OfType<RenderingLayerBloomFeature>().First();
             string original = EditorJsonUtility.ToJson(feature);
             bool wasDirty = EditorUtility.IsDirty(feature);
@@ -157,7 +157,7 @@ namespace LayerAwareBloom.Editor
                 blocker.SetActive(false);
                 VerifyLitTransparency(feature, camera, rt, scene, opaqueMaterial);
 
-                const string prefabPath = "Assets/Vefects/Free Fire VFX URP/Particles/VFX_Fire_Floor_01.prefab";
+                const string prefabPath = "Assets/ThirdParty/VFX/Free Fire VFX URP/Particles/VFX_Fire_Floor_01.prefab";
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
                 if (prefab != null)
                 {

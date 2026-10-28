@@ -194,7 +194,7 @@ Debug views should expose selection, source RGB, and individual group bloom as t
 
 ## Current step: six independent HDR bloom groups
 
-`RenderingLayerBloomFeature.cs` extracts the visible selected opaque surfaces' HDR scene color independently for each of six groups, then processes each with its own URP Gaussian bloom pyramid. It remains attached to `Assets/Settings/PC_Renderer.asset`; the original script and shader GUIDs are preserved.
+`RenderingLayerBloomFeature.cs` extracts the visible selected opaque surfaces' HDR scene color independently for each of six groups, then processes each with its own URP Gaussian bloom pyramid. It remains attached to `Assets/Settings/Rendering/DesktopRenderer.asset`; the original script and shader GUIDs are preserved.
 
 Processing order:
 
@@ -211,7 +211,7 @@ Processing order:
 
 `HdrTonemappingFeature.cs` and `HdrTonemapping.shader` form an independent renderer feature with a package-owned `HdrTonemappingMode` enum (None/Neutral/ACES), its own material, and one Render Graph fullscreen pass. It shares generic SRP Core color math only, with no Volume or built-in post-processing shader/LUT dependency. It preserves scene alpha, uses a separate destination, and forwards the result as cameraColor. The output targets SDR, with RGB bounded to 0–1 after the curve; None leaves HDR untouched. A serialized shader reference supports build inclusion.
 
-Added to PC_Renderer as **HDR Tonemapping**, with **Neutral** selected. The feature's enabled state remains under user control. Setup and integration notes are in `Assets/LayerAwareBloom/README.md`.
+Added to DesktopRenderer as **HDR Tonemapping**, with **Neutral** selected. The feature's enabled state remains under user control. Setup and integration notes are in `Assets/LayerAwareBloom/README.md`.
 
 Verification passed 39 GPU/serialization checks on Unity 6000.3.14f1 / URP 17.3 / DX12 / Linear: standalone operation with camera post-processing off and bloom absent, None/disabled bypass, Neutral and ACES response, black, monotonic grayscale up to 65504, finite SDR output, preserved alpha, bloom+grading-before-tonemapping with reversed feature-list order, and raw debug previews. A colored HDR patch matched the corresponding built-in LUT tonemapper within 0.00098 RGB for Neutral and 0.00220 for ACES. Unity bloom followed by our tonemapper matched Unity bloom plus built-in tonemapping within 0.00245 RGB after clipping the reference to SDR; an independent doubled-source comparison also verified that Unity bloom receives HDR before our tonemapper. These reference comparisons are fixture results, not a claim of identical full grading behavior. Temporary fixture/report: `Temp/TonemappingVerification.*`. No camera or scene settings are saved by the tests.
 

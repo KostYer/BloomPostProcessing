@@ -144,7 +144,7 @@ namespace LayerAwareBloom.Editor
 
         static void VerifyRenderGraph()
         {
-            var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>("Assets/Settings/PC_Renderer.asset");
+            var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>("Assets/Settings/Rendering/DesktopRenderer.asset");
             var feature = renderer.rendererFeatures.OfType<RenderingLayerBloomFeature>().First();
             string original = EditorJsonUtility.ToJson(feature);
             bool dirty = EditorUtility.IsDirty(feature);

@@ -45,7 +45,7 @@ namespace LayerAwareBloom.Editor
         [MenuItem("Tools/Layer Aware Bloom/Verify UI Sources")]
         public static void Run()
         {
-            var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>("Assets/Settings/PC_Renderer.asset");
+            var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>("Assets/Settings/Rendering/DesktopRenderer.asset");
             var feature = renderer.rendererFeatures.OfType<RenderingLayerBloomFeature>().First();
             string original = EditorJsonUtility.ToJson(feature);
             bool wasDirty = EditorUtility.IsDirty(feature);
