@@ -1,0 +1,33 @@
+Transparent bloom render regression
+OK: Selected transparent particle retains HDR emission
+OK: Transparent billboard corners remain black
+OK: transparent particle belongs to first matching group
+OK: transparent particle excluded from later matching group
+OK: transparent particle visibility and lighting layers restored
+OK: transparent particle exclusive second-group membership works
+OK: transparent particle falls back when first group is disabled
+OK: transparent particle identical group masks do not duplicate
+OK: transparent particle combined bloom is unchanged by overlapping second group
+OK: transparent particle zero-output first group allows second-group bloom
+OK: transparent particle normal camera rendering is preserved
+OK: Particle opacity scales HDR source
+OK: Overlapping additive particles accumulate
+OK: Unselected particle is excluded
+OK: Opaque foreground occludes selected particles
+OK: Selected particle produces bloom
+OK: Glow extends outside visible particle
+OK: Opaque HDR source still works
+OK: opaque mesh belongs to first matching group
+OK: opaque mesh excluded from later matching group
+OK: opaque mesh visibility and lighting layers restored
+OK: opaque mesh exclusive second-group membership works
+OK: opaque mesh falls back when first group is disabled
+OK: opaque mesh identical group masks do not duplicate
+OK: opaque mesh combined bloom is unchanged by overlapping second group
+OK: opaque mesh zero-output first group allows second-group bloom
+OK: opaque mesh normal camera rendering is preserved
+OK: Unselected transparent foreground cannot contaminate opaque source
+OK: Transparent lit material receives light
+OK: Overlap exclusion preserves lighting on other transparent renderers
+OK: Bloom shader compiles
+PASS

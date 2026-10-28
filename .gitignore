@@ -37,6 +37,8 @@
 *.apk
 *.aab
 *.unitypackage
+# Local release validation logs contain machine-specific paths and diagnostics.
+/ReleaseArtifacts/*.log
 sysinfo.txt
 
 # Unity generated asset data

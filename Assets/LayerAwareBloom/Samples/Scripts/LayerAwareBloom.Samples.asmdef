@@ -1,0 +1,11 @@
+{
+  "name": "LayerAwareBloom.Samples",
+  "rootNamespace": "LayerAwareBloom.Samples",
+  "references": [
+    "LayerAwareBloom.Runtime",
+    "Unity.RenderPipelines.Core.Runtime",
+    "Unity.RenderPipelines.Universal.Runtime",
+    "Unity.TextMeshPro"
+  ],
+  "autoReferenced": true
+}

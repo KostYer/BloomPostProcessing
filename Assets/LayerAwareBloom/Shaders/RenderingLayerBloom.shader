@@ -64,33 +64,36 @@ Shader "Hidden/LayerAwareBloom/RenderingLayerBloom"
         {
             // Match URP's final reconstruction as well as its pyramid filtering.
             uv = clamp(uv, texelSize.xy * 0.5, 1.0 - texelSize.xy * 0.5);
+            half3 color = 0;
             if (highQuality > 0.5)
-                return DecodeHDR(SampleTexture2DBicubic(TEXTURE2D_X_ARGS(bloomTexture, bloomSampler),
+                color = DecodeHDR(SampleTexture2DBicubic(TEXTURE2D_X_ARGS(bloomTexture, bloomSampler),
                     uv, texelSize.zwxy, (1.0).xx, unity_StereoEyeIndex));
-            return DecodeHDR(SAMPLE_TEXTURE2D_X(bloomTexture, bloomSampler, uv));
+            else
+                color = DecodeHDR(SAMPLE_TEXTURE2D_X(bloomTexture, bloomSampler, uv));
+            return color;
         }
 
         half3 CombinedBloom(float2 uv)
         {
             // C# packs active groups first. Uniform branches avoid sampling unused slots.
             half3 color = 0;
-            UNITY_BRANCH if (_LayerBloomCount < 1) return color;
-            color += SampleBloom(TEXTURE2D_X_ARGS(_LayerBloomTexture0, sampler_LinearClamp),
+            UNITY_BRANCH if (_LayerBloomCount > 0)
+                color += SampleBloom(TEXTURE2D_X_ARGS(_LayerBloomTexture0, sampler_LinearClamp),
                 uv, _LayerBloomTexture0_TexelSize, _LayerBloomWeight0.w) * _LayerBloomWeight0.rgb;
-            UNITY_BRANCH if (_LayerBloomCount < 2) return color;
-            color += SampleBloom(TEXTURE2D_X_ARGS(_LayerBloomTexture1, sampler_LinearClamp),
+            UNITY_BRANCH if (_LayerBloomCount > 1)
+                color += SampleBloom(TEXTURE2D_X_ARGS(_LayerBloomTexture1, sampler_LinearClamp),
                 uv, _LayerBloomTexture1_TexelSize, _LayerBloomWeight1.w) * _LayerBloomWeight1.rgb;
-            UNITY_BRANCH if (_LayerBloomCount < 3) return color;
-            color += SampleBloom(TEXTURE2D_X_ARGS(_LayerBloomTexture2, sampler_LinearClamp),
+            UNITY_BRANCH if (_LayerBloomCount > 2)
+                color += SampleBloom(TEXTURE2D_X_ARGS(_LayerBloomTexture2, sampler_LinearClamp),
                 uv, _LayerBloomTexture2_TexelSize, _LayerBloomWeight2.w) * _LayerBloomWeight2.rgb;
-            UNITY_BRANCH if (_LayerBloomCount < 4) return color;
-            color += SampleBloom(TEXTURE2D_X_ARGS(_LayerBloomTexture3, sampler_LinearClamp),
+            UNITY_BRANCH if (_LayerBloomCount > 3)
+                color += SampleBloom(TEXTURE2D_X_ARGS(_LayerBloomTexture3, sampler_LinearClamp),
                 uv, _LayerBloomTexture3_TexelSize, _LayerBloomWeight3.w) * _LayerBloomWeight3.rgb;
-            UNITY_BRANCH if (_LayerBloomCount < 5) return color;
-            color += SampleBloom(TEXTURE2D_X_ARGS(_LayerBloomTexture4, sampler_LinearClamp),
+            UNITY_BRANCH if (_LayerBloomCount > 4)
+                color += SampleBloom(TEXTURE2D_X_ARGS(_LayerBloomTexture4, sampler_LinearClamp),
                 uv, _LayerBloomTexture4_TexelSize, _LayerBloomWeight4.w) * _LayerBloomWeight4.rgb;
-            UNITY_BRANCH if (_LayerBloomCount < 6) return color;
-            color += SampleBloom(TEXTURE2D_X_ARGS(_LayerBloomTexture5, sampler_LinearClamp),
+            UNITY_BRANCH if (_LayerBloomCount > 5)
+                color += SampleBloom(TEXTURE2D_X_ARGS(_LayerBloomTexture5, sampler_LinearClamp),
                 uv, _LayerBloomTexture5_TexelSize, _LayerBloomWeight5.w) * _LayerBloomWeight5.rgb;
             return color;
         }

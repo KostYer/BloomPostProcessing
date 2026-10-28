@@ -21,6 +21,11 @@ namespace LayerAwareBloom
     {
         public const int GroupCount = 6;
 
+#if UNITY_EDITOR
+        // Editor diagnostics subscribe here; no editor assemblies or checks enter player builds.
+        public static event System.Action<RenderingLayerBloomFeature, Camera, bool, bool> EditorCameraSetupEvaluated;
+#endif
+
         [System.Serializable]
         public sealed class BloomGroupSettings
         {
@@ -204,6 +209,21 @@ namespace LayerAwareBloom
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             var cameraData = renderingData.cameraData;
+#if UNITY_EDITOR
+            if (EditorCameraSetupEvaluated != null)
+            {
+                bool hasOutput = false;
+                if (enableBloom && !showFullscreen && maskMaterial != null && cameraData.renderType == CameraRenderType.Base &&
+                    (cameraData.cameraType == CameraType.Game || cameraData.cameraType == CameraType.SceneView))
+                    foreach (var group in Groups)
+                        hasOutput |= group.enabled && (uint)group.renderingLayers != 0 && group.intensity > 0 &&
+                            group.clamp > 0 && (group.tint.r > 0 || group.tint.g > 0 || group.tint.b > 0);
+                var unityBloom = VolumeManager.instance.stack?.GetComponent<Bloom>();
+                bool conflict = hasOutput && cameraData.postProcessEnabled && unityBloom != null &&
+                    unityBloom.active && unityBloom.IsActive();
+                EditorCameraSetupEvaluated(this, cameraData.camera, conflict, hasOutput && !cameraData.isHdrEnabled);
+            }
+#endif
             if (maskMaterial == null || cameraData.renderType != CameraRenderType.Base ||
                 (cameraData.cameraType != CameraType.Game && cameraData.cameraType != CameraType.SceneView))
                 return;

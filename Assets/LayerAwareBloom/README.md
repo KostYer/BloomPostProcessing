@@ -1,5 +1,9 @@
 # Layer Aware Bloom
 
+Start with [Quick Start](Documentation/QuickStart.md), [Compatibility](Documentation/Compatibility.md), and [Release Preparation](Documentation/ReleasePreparation.md). Changes are listed in [CHANGELOG](CHANGELOG.md).
+
+The release candidate includes the primitive-based `Samples/GettingStarted` demo. The broader sample scenes/art described in the project layout below belong to the development project and are excluded from the explicit release export.
+
 This package contains two independent URP renderer features:
 
 - **Rendering Layer Bloom** selects opaque surfaces and transparent renderers by Rendering Layer, builds up to six independent bloom groups, and optionally grades the combined image.
@@ -83,7 +87,7 @@ Transparent particles and meshes are drawn into each group's HDR source using th
 
 Opaque selection is captured before normal transparency rendering, so unselected particles cannot contaminate selected opaque colors. Only selected transparent renderers participate in the source's transparency blending; unselected transparent foregrounds do not attenuate bloom, and refractive shaders can include background color from the camera opaque texture. Opaque objects still occlude transparent sources. Each active group adds a transparent renderer-list draw in addition to its existing mask and blur passes.
 
-Run **Tools > Layer Aware Bloom > Verify Transparent Sources** to check HDR particles, alpha, additive blending, layer exclusion, opaque occlusion, bloom spread, and the imported fire prefab when present. The check uses a temporary preview scene with the project's PC renderer, restores feature settings, and writes its report and captures under `Temp/`.
+Run **Tools > Layer Aware Bloom > Verify Transparent Sources** to check HDR particles, alpha, additive blending, layer exclusion, opaque occlusion, bloom spread, and the imported fire prefab when present. The check discovers the active URP asset's default renderer, uses a temporary preview scene, restores feature settings, and writes its report and captures under `Temp/`.
 
 Tonemapping has its own C# settings, material, shader, and Render Graph pass. It uses shared SRP Core color-math functions, not Unity's post-processing passes, Volume settings, or grading LUT. The shader reference is serialized in the renderer feature so it can be included in builds.
 

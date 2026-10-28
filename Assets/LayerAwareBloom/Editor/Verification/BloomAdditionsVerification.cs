@@ -85,6 +85,11 @@ namespace LayerAwareBloom.Editor
                             var after = Draw(material, source, pass, .5f, 1);
                             Require(MaxDifference(before, after) <= 1e-6f, $"Default pass {pass}, HQ={hq}: matches pre-change shader");
                         }
+                        foreach (int pass in new[] { 1, 7 })
+                            for (int count = 0; count <= RenderingLayerBloomFeature.GroupCount; count++)
+                                Require(MaxDifference(Draw(baseline, source, pass, .5f, 1, count),
+                                    Draw(material, source, pass, .5f, 1, count)) <= 1e-6f,
+                                    $"Composite/preview pass {pass}, HQ={hq}, groups={count}: matches pre-change shader");
                     }
                     Require(!ShaderUtil.ShaderHasError(baselineShader), "Baseline shader compiled");
                 }
@@ -144,8 +149,7 @@ namespace LayerAwareBloom.Editor
 
         static void VerifyRenderGraph()
         {
-            var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>("Assets/Settings/Rendering/DesktopRenderer.asset");
-            var feature = renderer.rendererFeatures.OfType<RenderingLayerBloomFeature>().First();
+            var feature = BloomVerificationContext.FindFeature();
             string original = EditorJsonUtility.ToJson(feature);
             bool dirty = EditorUtility.IsDirty(feature);
             try
@@ -190,7 +194,7 @@ namespace LayerAwareBloom.Editor
         static void Require(bool condition, string message)
         { if (!condition) throw new Exception(message); File.AppendAllText(Report, "OK " + message + "\n"); }
 
-        static Color[] Draw(Material material, Texture source, int pass, float knee, float radius)
+        static Color[] Draw(Material material, Texture source, int pass, float knee, float radius, int bloomCount = 0)
         {
             var previous = RenderTexture.active;
             var target = new RenderTexture(new RenderTextureDescriptor(Size, Size, GraphicsFormat.R32G32B32A32_SFloat, 0));
@@ -207,8 +211,23 @@ namespace LayerAwareBloom.Editor
                 properties.SetVector("_BlitScaleBias", new Vector4(1, 1, 0, 0));
                 properties.SetVector("_Params", new Vector4(.68f, 65472, 1, knee));
                 properties.SetFloat("_BloomRadius", radius);
+                properties.SetInt("_LayerBloomCount", bloomCount);
+                properties.SetFloat("_PreviewSource", 0);
+                properties.SetVector("_LayerGradingParams", new Vector4(1, 0, 1, 0));
+                for (int i = 0; i < RenderingLayerBloomFeature.GroupCount; i++)
+                {
+                    properties.SetTexture("_LayerBloomTexture" + i, source);
+                    properties.SetVector("_LayerBloomTexture" + i + "_TexelSize", new Vector4(1f / Size, 1f / Size, Size, Size));
+                    properties.SetVector("_LayerBloomWeight" + i, new Vector4(.1f * (i + 1), .2f, .3f,
+                        material.IsKeywordEnabled("_LAYER_BLOOM_HQ") ? 1 : 0));
+                }
                 command.SetRenderTarget(target); command.SetViewport(new Rect(0, 0, Size, Size));
+                // This isolated draw can run before URP has rendered its first camera.
+                // Supply the full-size RTHandle scale normally established by URP.
+                var previousScale = Shader.GetGlobalVector("_RTHandleScale");
+                command.SetGlobalVector("_RTHandleScale", Vector4.one);
                 command.DrawProcedural(Matrix4x4.identity, material, pass, MeshTopology.Triangles, 3, 1, properties);
+                command.SetGlobalVector("_RTHandleScale", previousScale);
                 Graphics.ExecuteCommandBuffer(command);
                 RenderTexture.active = target;
                 readback.ReadPixels(new Rect(0, 0, Size, Size), 0, 0); readback.Apply();

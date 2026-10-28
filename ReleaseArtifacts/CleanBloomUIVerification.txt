@@ -1,0 +1,35 @@
+UI bloom render regression
+Initial peak: 4, mesh: 4, alpha: 1
+OK: World Space Image contributes HDR emission through parent selection
+OK: Sprite transparent corners stay black
+OK: CanvasGroup fade attenuates source once
+OK: CanvasRenderer alpha combines with CanvasGroup alpha
+OK: Graphic alpha is preserved
+OK: Graphic RGB is converted from sRGB to linear HDR
+OK: Empty child selection overrides inherited membership
+Default layer unselected peak: 0
+OK: Unselected native CanvasRenderer does not leak into default-layer source
+OK: Overlapping UI belongs to first group
+OK: Overlapping UI is excluded from second group preview
+OK: UI falls back to next enabled group
+OK: Disabled child selection opts out of parent bloom
+OK: Default rendering layer does not capture UI twice
+OK: Unselected foreground UI hides selected UI without emitting
+OK: Translucent foreground UI attenuates bloom
+OK: Scene depth occludes World Space UI
+OK: RectMask2D clips generated source
+OK: RectMask2D softness attenuates the edge
+OK: Hidden Mask graphic clips children using sprite alpha
+OK: Native UI wrapper preserves normal masked rendering pixel-for-pixel
+OK: Nested Masks intersect and restore stencil between draws
+OK: RawImage preserves texture alpha and inherited selection
+OK: Legacy Text captures glyph coverage
+OK: UI produces blur outside source geometry
+OK: Two matching groups do not double UI bloom
+OK: Screen Space Camera UI aligns with its camera
+OK: Screen Space Overlay is ignored
+OK: Capture leaves original UI material and renderer color unchanged
+OK: Original UI material serialization is unchanged
+OK: UI shader compiles
+OK: Native UI wrapper shader compiles
+PASS

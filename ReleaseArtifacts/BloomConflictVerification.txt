@@ -1,0 +1,13 @@
+Double bloom warning: actual per-camera render/Volume evaluation
+OK Both effects active
+OK Repeated frame retains conflict
+OK Zero Unity Bloom intensity
+OK Disabled Unity Bloom override
+OK Zero Volume weight
+OK Camera excludes Volume layer
+OK Camera post processing disabled
+OK Our group has zero output
+OK Our bloom disabled
+OK Camera outside local Volume
+OK Camera inside local Volume
+PASS

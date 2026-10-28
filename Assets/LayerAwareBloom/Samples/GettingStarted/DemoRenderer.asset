@@ -1,0 +1,205 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de640fe3d0db1804a85f9fc8f5cadab6, type: 3}
+  m_Name: DemoRenderer
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalRendererData
+  debugShaders:
+    debugReplacementPS: {fileID: 4800000, guid: cf852408f2e174538bcd9b7fda1c5ae7, type: 3}
+    hdrDebugViewPS: {fileID: 4800000, guid: 573620ae32aec764abd4d728906d2587, type: 3}
+    probeVolumeSamplingDebugComputeShader: {fileID: 7200000, guid: 53626a513ea68ce47b59dc1299fe3959, type: 3}
+  probeVolumeResources:
+    probeVolumeDebugShader: {fileID: 0}
+    probeVolumeFragmentationDebugShader: {fileID: 0}
+    probeVolumeOffsetDebugShader: {fileID: 0}
+    probeVolumeSamplingDebugShader: {fileID: 0}
+    probeSamplingDebugMesh: {fileID: 0}
+    probeSamplingDebugTexture: {fileID: 0}
+    probeVolumeBlendStatesCS: {fileID: 0}
+  m_RendererFeatures:
+  - {fileID: 2132755851254668319}
+  - {fileID: 7292840100189522169}
+  m_RendererFeatureMap: 1f9cab9a2512991df94885976e5f3565
+  m_UseNativeRenderPass: 0
+  xrSystemData: {fileID: 0}
+  postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
+  m_AssetVersion: 3
+  m_PrepassLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_OpaqueLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_TransparentLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_DefaultStencilState:
+    overrideStencilState: 0
+    stencilReference: 0
+    stencilCompareFunction: 8
+    passOperation: 2
+    failOperation: 0
+    zFailOperation: 0
+  m_ShadowTransparentReceive: 1
+  m_RenderingMode: 0
+  m_DepthPrimingMode: 0
+  m_CopyDepthMode: 1
+  m_DepthAttachmentFormat: 0
+  m_DepthTextureFormat: 0
+  m_AccurateGbufferNormals: 0
+  m_IntermediateTextureMode: 1
+--- !u!114 &2132755851254668319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4bd365924244c4d90d641c589efabec, type: 3}
+  m_Name: Rendering Layer Bloom
+  m_EditorClassIdentifier: LayerAwareBloom.Runtime::LayerAwareBloom.RenderingLayerBloomFeature
+  m_Active: 1
+  groups:
+  - name: Group 1
+    enabled: 1
+    renderingLayers:
+      serializedVersion: 0
+      m_Bits: 2
+    threshold: 1
+    intensity: 2
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    clamp: 65472
+    scatter: 0.7
+    maxIterations: 6
+    downscale: 0
+    highQualityFiltering: 0
+    softKnee: 0.5
+    radius: 1
+    stopNaN: 0
+  - name: Group 2
+    enabled: 1
+    renderingLayers:
+      serializedVersion: 0
+      m_Bits: 4
+    threshold: 0.9
+    intensity: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    clamp: 65472
+    scatter: 0.45
+    maxIterations: 6
+    downscale: 0
+    highQualityFiltering: 0
+    softKnee: 0.5
+    radius: 1
+    stopNaN: 0
+  - name: Group 3
+    enabled: 0
+    renderingLayers:
+      serializedVersion: 0
+      m_Bits: 0
+    threshold: 0.9
+    intensity: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    clamp: 65472
+    scatter: 0.7
+    maxIterations: 6
+    downscale: 0
+    highQualityFiltering: 0
+    softKnee: 0.5
+    radius: 1
+    stopNaN: 0
+  - name: Group 4
+    enabled: 0
+    renderingLayers:
+      serializedVersion: 0
+      m_Bits: 0
+    threshold: 0.9
+    intensity: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    clamp: 65472
+    scatter: 0.7
+    maxIterations: 6
+    downscale: 0
+    highQualityFiltering: 0
+    softKnee: 0.5
+    radius: 1
+    stopNaN: 0
+  - name: Group 5
+    enabled: 0
+    renderingLayers:
+      serializedVersion: 0
+      m_Bits: 0
+    threshold: 0.9
+    intensity: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    clamp: 65472
+    scatter: 0.7
+    maxIterations: 6
+    downscale: 0
+    highQualityFiltering: 0
+    softKnee: 0.5
+    radius: 1
+    stopNaN: 0
+  - name: Group 6
+    enabled: 0
+    renderingLayers:
+      serializedVersion: 0
+      m_Bits: 0
+    threshold: 0.9
+    intensity: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    clamp: 65472
+    scatter: 0.7
+    maxIterations: 6
+    downscale: 0
+    highQualityFiltering: 0
+    softKnee: 0.5
+    radius: 1
+    stopNaN: 0
+  colorGrading:
+    enabled: 0
+    exposure: 0
+    contrast: 0
+    saturation: 0
+    colorFilter: {r: 1, g: 1, b: 1, a: 1}
+  renderingLayers:
+    serializedVersion: 0
+    m_Bits: 1
+  showFullscreen: 0
+  bloomShader: {fileID: 4800000, guid: 7bf614eb4e2a4ab3a94f0c558a626850, type: 3}
+  uiBloomShader: {fileID: 4800000, guid: c3cf349646c99cd419deb8dbdc008ac5, type: 3}
+  uiNativeShader: {fileID: 4800000, guid: dc26f2912ecc4d1dafa4ec301fc0823e, type: 3}
+  enableBloom: 1
+  threshold: 0.9
+  intensity: 1
+  clamp: 65472
+  scatter: 0.7
+  maxIterations: 6
+  downscale: 0
+  highQualityFiltering: 0
+  previewGroup: -1
+--- !u!114 &7292840100189522169
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cdaa5f719384ab744aeed508881b9f21, type: 3}
+  m_Name: HDR Tonemapping
+  m_EditorClassIdentifier: LayerAwareBloom.Runtime::LayerAwareBloom.HdrTonemappingFeature
+  m_Active: 1
+  tonemappingShader: {fileID: 4800000, guid: 71f853b300010444fb17e864f50a825d, type: 3}
+  mode: 1

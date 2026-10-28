@@ -69,6 +69,7 @@ namespace LayerAwareBloom.Editor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
+            BloomSetupDiagnostics.Draw((RenderingLayerBloomFeature)target, serializedObject);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("bloomShader"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("uiBloomShader"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("uiNativeShader"));

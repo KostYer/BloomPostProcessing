@@ -32,8 +32,7 @@ namespace LayerAwareBloom.Editor
         [MenuItem("Tools/Layer Aware Bloom/Verify Transparent Sources")]
         public static void Run()
         {
-            var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>("Assets/Settings/Rendering/DesktopRenderer.asset");
-            var feature = renderer.rendererFeatures.OfType<RenderingLayerBloomFeature>().First();
+            var feature = BloomVerificationContext.FindFeature();
             string original = EditorJsonUtility.ToJson(feature);
             bool wasDirty = EditorUtility.IsDirty(feature);
             var previousTarget = RenderTexture.active;
