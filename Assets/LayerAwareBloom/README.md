@@ -29,6 +29,16 @@ With multiple groups, the feature checks renderer membership once per camera. A 
 
 ## Integration
 
+### Optional bloom additions
+
+Each group has a collapsible **Optional Additions** inspector section, initially closed. Its open/closed state is remembered during the editor session; hiding the controls does not disable their effects. Existing and new groups default to the original Unity-style filtering:
+
+- **Soft Knee: 0.5**. Transition width relative to the linear threshold; 0 gives a hard threshold and 1 a wider transition. The default reproduces the original fixed knee.
+- **Radius: 1**. Multiplies horizontal and vertical blur sample spacing, with a conservative range of 0.5–1.5. Lower values tighten the glow; higher values widen it. Scatter, downscale, and pyramid iterations still affect spread. The default retains the original taps and weights; this does not replace the Gaussian pyramid. At resolutions with only one pyramid level there are no Gaussian blur passes, so radius has no effect.
+- **Stop NaN / Infinity: off**. When enabled, one extra full-resolution pass removes pixels containing invalid RGB from the selected source after transparent/UI capture and before filtering. Valid source pixels are preserved. This protects bloom, not the original scene color or the raw source debug preview. It adds a full-resolution HDR texture and draw per enabled group.
+
+**Reset Group to Defaults** sits outside the optional foldout and restores every setting in that group, including the core bloom settings, optional additions, name, enabled state, and rendering layers. Defaults match a fresh feature: Group 1 is enabled on the Default rendering layer; Groups 2–6 are disabled with empty layer masks. Other groups and feature-wide settings are retained. The button supports the normal Inspector Undo/Redo workflow.
+
 ### Assigning a VFX hierarchy
 
 Add **Rendering Layer Assigner** to the effect root, select its **Rendering Layers**, and press **Apply to Root and Children**. This replaces the mask on every Renderer in the hierarchy, including inactive children, particle renderers, VFX Graph renderers, and meshes. Include any lighting layers you want to retain in the selected mask. The button supports Undo and prefab instance overrides. It runs only when pressed; newly added children require another Apply. GameObject layers and Light components are unaffected.

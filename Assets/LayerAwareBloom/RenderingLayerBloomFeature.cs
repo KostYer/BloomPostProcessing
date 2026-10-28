@@ -24,6 +24,10 @@ namespace LayerAwareBloom
         [System.Serializable]
         public sealed class BloomGroupSettings
         {
+            public const float DefaultSoftKnee = 0.5f;
+            public const float DefaultRadius = 1f;
+            public const bool DefaultStopNaN = false;
+
             public string name = "Bloom Group";
             public bool enabled = true;
             public RenderingLayerMask renderingLayers = 1;
@@ -35,6 +39,13 @@ namespace LayerAwareBloom
             [Range(2, 8)] public int maxIterations = 6;
             public BloomDownscale downscale = BloomDownscale.Half;
             public bool highQualityFiltering;
+
+            [Tooltip("Optional threshold transition width, relative to the linear threshold. 0 is hard; 0.5 matches the original Unity-style bloom.")]
+            [Range(0, 1)] public float softKnee = DefaultSoftKnee;
+            [Tooltip("Optional blur sample spacing multiplier. 1 preserves the original Unity-style blur; lower is tighter, higher is wider. Scatter and iterations still affect spread.")]
+            [Range(0.5f, 1.5f)] public float radius = DefaultRadius;
+            [Tooltip("Remove pixels containing NaN or Infinity from the bloom source before filtering. Adds one full-resolution pass per enabled group. Does not repair the scene color or raw source preview.")]
+            public bool stopNaN = DefaultStopNaN;
         }
 
         [System.Serializable]
@@ -260,7 +271,7 @@ namespace LayerAwareBloom
                 bloomMaskPasses[i].Setup(maskMaterial, group.renderingLayers, enableBloom ? filter : null,
                     group.scatter, group.maxIterations, group.downscale, group.threshold, group.clamp,
                     group.tint.linear * Mathf.Max(0, group.intensity), groupCulling, customCulling,
-                    uiCapture, groups, enableBloom);
+                    uiCapture, groups, enableBloom, group.softKnee, group.radius, group.stopNaN);
                 renderer.EnqueuePass(bloomMaskPasses[i]);
                 anyGroup = true;
             }
@@ -331,12 +342,14 @@ namespace LayerAwareBloom
             // Shader passes 0/1 draw the mask and preview. These four contain the URP Gaussian filters in RenderingLayerBloom.shader.
             private const int Prefilter = 2, BlurHorizontal = 3, BlurVertical = 4, Upsample = 5;
             private const int ExtractSource = 6;
+            private const int SanitizeSource = 8;
             private static readonly int BlitTexture = Shader.PropertyToID("_BlitTexture");
             private static readonly int BlitTexelSize = Shader.PropertyToID("_BlitTexture_TexelSize");
             private static readonly int BlitScaleBias = Shader.PropertyToID("_BlitScaleBias");
             private static readonly int LowMip = Shader.PropertyToID("_SourceTexLowMip");
             private static readonly int LowMipTexelSize = Shader.PropertyToID("_SourceTexLowMip_TexelSize");
             private static readonly int Parameters = Shader.PropertyToID("_Params");
+            private static readonly int BlurRadius = Shader.PropertyToID("_BloomRadius");
             private static readonly int SelectionMask = Shader.PropertyToID("_SelectionMask");
             private static readonly int DrawObjectPassData = Shader.PropertyToID("_DrawObjectPassData");
             private static readonly int AlphaToMaskAvailable = Shader.PropertyToID("_AlphaToMaskAvailable");
@@ -349,6 +362,9 @@ namespace LayerAwareBloom
             private BloomDownscale downscale;
             private float threshold;
             private float clamp;
+            private float softKnee;
+            private float radius;
+            private bool stopNaN;
 
             private Material maskMaterial;
             private uint renderingLayerMask;
@@ -368,6 +384,7 @@ namespace LayerAwareBloom
                 public Vector4 sourceTexelSize;
                 public Vector4 lowMipTexelSize;
                 public Vector4 parameters;
+                public float radius;
                 public Material material;
                 public int shaderPass;
                 // Render Graph pools PassData. Each draw gets its own bindings, not shared material state.
@@ -377,7 +394,8 @@ namespace LayerAwareBloom
             public void Setup(Material maskMaterial, uint layerMask, Material blurMaterial,
                 float scatterValue, int iterations, BloomDownscale scale, float thresholdValue, float clampValue, Color weight,
                 CullingResults groupCulling, bool customCulling, UIBloomCapture uiCapture,
-                IReadOnlyList<BloomGroupSettings> groups, bool bloomEnabled)
+                IReadOnlyList<BloomGroupSettings> groups, bool bloomEnabled,
+                float softKnee, float radius, bool stopNaN)
             {
                 this.maskMaterial = maskMaterial;
                 renderingLayerMask = layerMask;
@@ -387,6 +405,9 @@ namespace LayerAwareBloom
                 downscale = scale;
                 threshold = Mathf.Max(0, thresholdValue);
                 clamp = Mathf.Max(0, clampValue);
+                this.softKnee = Mathf.Clamp01(softKnee);
+                this.radius = Mathf.Clamp(radius, 0.5f, 1.5f);
+                this.stopNaN = stopNaN;
                 this.weight = weight;
                 this.groupCulling = groupCulling;
                 this.customCulling = customCulling;
@@ -552,6 +573,7 @@ namespace LayerAwareBloom
                 data.lowMip = TextureHandle.nullHandle;
                 data.sourceTexelSize = CalculateTexelSize(graph.GetTextureDesc(cameraColor));
                 data.parameters = Vector4.zero;
+                data.radius = BloomGroupSettings.DefaultRadius;
                 data.material = maskMaterial;
                 data.shaderPass = ExtractSource;
                 builder.UseTexture(cameraColor, AccessFlags.Read);
@@ -565,6 +587,17 @@ namespace LayerAwareBloom
             private TextureHandle RecordBloomPyramid(RenderGraph renderGraph, TextureHandle source)
             {
                 var descriptor = renderGraph.GetTextureDesc(source);
+                if (stopNaN)
+                {
+                    // Sanitize AFTER transparent/UI draws, BEFORE any bilinear/pyramid sampling.
+                    var cleanDescriptor = descriptor;
+                    cleanDescriptor.name = $"{groupLabel} Finite HDR Source";
+                    cleanDescriptor.msaaSamples = MSAASamples.None;
+                    cleanDescriptor.bindTextureMS = false;
+                    var cleanSource = renderGraph.CreateTexture(cleanDescriptor);
+                    RecordFilterPass(renderGraph, "Stop NaN / Infinity", source, cleanSource, SanitizeSource, Vector4.zero);
+                    source = cleanSource;
+                }
                 int shift = downscale == BloomDownscale.Quarter ? 2 : 1;
                 int width = Mathf.Max(1, descriptor.width >> shift);
                 int height = Mathf.Max(1, descriptor.height >> shift);
@@ -595,10 +628,10 @@ namespace LayerAwareBloom
                     height = Mathf.Max(1, height >> 1);
                 }
 
-                // URP exposes threshold in gamma space and fixes the soft knee at half the linear threshold.
+                // Default 0.5 keeps URP's original knee; only the optional control changes it.
                 float linearThreshold = Mathf.GammaToLinearSpace(threshold);
                 var parameters = new Vector4(Mathf.Lerp(0.05f, 0.95f, scatter), clamp,
-                    linearThreshold, linearThreshold * 0.5f);
+                    linearThreshold, linearThreshold * softKnee);
                 RecordFilterPass(renderGraph, "Rendering Layer Bloom Prefilter", source, downsamplePyramid[0], Prefilter, parameters);
                 for (int i = 1; i < levels; i++)
                 {
@@ -626,6 +659,7 @@ namespace LayerAwareBloom
                 data.material = filterMaterial;
                 data.shaderPass = shaderPass;
                 data.parameters = parameters;
+                data.radius = radius;
                 data.sourceTexelSize = CalculateTexelSize(graph.GetTextureDesc(source));
                 builder.UseTexture(source, AccessFlags.Read);
                 if (lowMip.IsValid())
@@ -651,6 +685,7 @@ namespace LayerAwareBloom
                 properties.SetVector(BlitTexelSize, data.sourceTexelSize);
                 properties.SetVector(BlitScaleBias, new Vector4(1, 1, 0, 0));
                 properties.SetVector(Parameters, data.parameters);
+                properties.SetFloat(BlurRadius, data.radius);
                 if (data.selectionMask.IsValid())
                 {
                     RTHandle selectionMask = data.selectionMask;

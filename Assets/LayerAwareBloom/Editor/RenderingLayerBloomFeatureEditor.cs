@@ -6,7 +6,57 @@ namespace LayerAwareBloom.Editor
     [CustomEditor(typeof(RenderingLayerBloomFeature))]
     public sealed class RenderingLayerBloomFeatureEditor : UnityEditor.Editor
     {
+        private static readonly string[] CoreGroupFields =
+        {
+            "name", "enabled", "renderingLayers", "threshold", "intensity", "tint", "clamp",
+            "scatter", "maxIterations", "downscale", "highQualityFiltering"
+        };
         private static readonly string[] PreviewOptions = CreatePreviewOptions();
+
+        private static void DrawGroup(SerializedProperty group, int index)
+        {
+            group.isExpanded = EditorGUILayout.Foldout(group.isExpanded, $"Group {index + 1}", true);
+            if (!group.isExpanded) return;
+            using (new EditorGUI.IndentLevelScope())
+            {
+                foreach (string field in CoreGroupFields)
+                    EditorGUILayout.PropertyField(group.FindPropertyRelative(field));
+
+                EditorGUILayout.Space();
+                string foldoutKey = $"LayerAwareBloom.OptionalAdditions.{group.serializedObject.targetObject.GetInstanceID()}.{index}";
+                bool expanded = SessionState.GetBool(foldoutKey, false);
+                bool nextExpanded = EditorGUILayout.Foldout(expanded, new GUIContent("Optional Additions",
+                    "Show or hide additional bloom controls. Collapsing this section does not disable them."), true);
+                if (expanded != nextExpanded) SessionState.SetBool(foldoutKey, nextExpanded);
+                if (nextExpanded)
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        EditorGUILayout.HelpBox(
+                            "Defaults preserve the original Unity-style bloom: Soft Knee 0.5, Radius 1, Stop NaN / Infinity off.",
+                            MessageType.Info);
+                        EditorGUILayout.PropertyField(group.FindPropertyRelative("softKnee"), new GUIContent("Soft Knee", "Threshold transition width. Default: 0.5 (original Unity-style knee)."));
+                        EditorGUILayout.PropertyField(group.FindPropertyRelative("radius"), new GUIContent("Radius", "Blur sample spacing. Default: 1 (original Unity-style blur). Range: 0.5 to 1.5."));
+                        EditorGUILayout.PropertyField(group.FindPropertyRelative("stopNaN"), new GUIContent("Stop NaN / Infinity", "Default: off. Adds a full-resolution cleanup pass for this group before blur; does not repair scene color or the raw source preview."));
+                    }
+                }
+                if (GUILayout.Button(new GUIContent("Reset Group to Defaults",
+                    "Reset every setting in this group, including its name, enabled state, rendering layers, and optional additions. Other groups are unchanged. Supports Undo.")))
+                    ResetGroup(group, index);
+            }
+        }
+
+        internal static void ResetGroup(SerializedProperty group, int index)
+        {
+            // Match a freshly created feature: Group 1 uses Default; spare slots start disabled/empty.
+            // Set through serialization so the entire reset is a normal Inspector undo operation.
+            group.boxedValue = new RenderingLayerBloomFeature.BloomGroupSettings
+            {
+                name = $"Group {index + 1}",
+                enabled = index == 0,
+                renderingLayers = index == 0 ? 1u : 0u
+            };
+        }
 
         private static string[] CreatePreviewOptions()
         {
@@ -29,7 +79,7 @@ namespace LayerAwareBloom.Editor
             {
                 var groups = serializedObject.FindProperty("groups");
                 for (int i = 0; i < groups.arraySize; i++)
-                    EditorGUILayout.PropertyField(groups.GetArrayElementAtIndex(i), new GUIContent($"Group {i + 1}"), true);
+                    DrawGroup(groups.GetArrayElementAtIndex(i), i);
             }
 
             EditorGUILayout.Space();

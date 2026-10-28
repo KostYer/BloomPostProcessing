@@ -99,6 +99,9 @@ MonoBehaviour:
     maxIterations: 6
     downscale: 0
     highQualityFiltering: 1
+    softKnee: 0.5
+    radius: 1
+    stopNaN: 0
   - name: Group 2
     enabled: 1
     renderingLayers:
@@ -112,6 +115,9 @@ MonoBehaviour:
     maxIterations: 6
     downscale: 0
     highQualityFiltering: 1
+    softKnee: 0.5
+    radius: 1
+    stopNaN: 0
   - name: Group 3
     enabled: 1
     renderingLayers:
@@ -125,6 +131,9 @@ MonoBehaviour:
     maxIterations: 6
     downscale: 0
     highQualityFiltering: 1
+    softKnee: 0.5
+    radius: 1
+    stopNaN: 0
   - name: Group 4
     enabled: 1
     renderingLayers:
@@ -138,6 +147,9 @@ MonoBehaviour:
     maxIterations: 6
     downscale: 0
     highQualityFiltering: 1
+    softKnee: 0.5
+    radius: 1
+    stopNaN: 0
   - name: Group 5
     enabled: 1
     renderingLayers:
@@ -151,6 +163,9 @@ MonoBehaviour:
     maxIterations: 6
     downscale: 0
     highQualityFiltering: 0
+    softKnee: 0.5
+    radius: 1
+    stopNaN: 0
   - name: Group 6
     enabled: 1
     renderingLayers:
@@ -164,6 +179,9 @@ MonoBehaviour:
     maxIterations: 6
     downscale: 0
     highQualityFiltering: 0
+    softKnee: 0.5
+    radius: 1
+    stopNaN: 0
   colorGrading:
     enabled: 0
     exposure: 0
