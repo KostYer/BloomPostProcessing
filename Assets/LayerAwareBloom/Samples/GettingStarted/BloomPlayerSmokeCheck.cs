@@ -31,7 +31,7 @@ namespace LayerAwareBloom.Samples
                 // Scene Volume isolation/blending has a separate verification fixture.
                 feature.SettingsSource = BloomSettingsSource.RendererAsset;
                 target.Create();
-                foreach (string shaderName in new[] { "RenderingLayerBloom", "HdrTonemapping", "UIBloomSource", "UIBloomNative" })
+                foreach (string shaderName in new[] { "RenderingLayerBloom", "UIBloomSource", "UIBloomNative" })
                 {
                     var shader = Shader.Find("Hidden/LayerAwareBloom/" + shaderName);
                     if (shader == null || !shader.isSupported) throw new Exception("Missing/unsupported shader: " + shaderName);

@@ -1,0 +1,15 @@
+{
+  "package": "LayerAwareBloom-1.0.0-rc2.unitypackage",
+  "bytes": 84318,
+  "exported_files": 44,
+  "sha256": "9dc08ff4825083c01ba0e05d38c3ff05f1c68b3da7c74825bfab45219eade6a1",
+  "checks": [
+    "Archive readable",
+    "All exported assets match current source",
+    "Unity tonemapping setup included",
+    "Custom tonemapping removed",
+    "Development scenes/art and project settings excluded",
+    "Temporary export trigger excluded"
+  ],
+  "validation_note": "27 Unity integration checks passed before export; no new clean-project import or player build performed for rc2."
+}

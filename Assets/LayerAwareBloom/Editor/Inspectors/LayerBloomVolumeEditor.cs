@@ -10,6 +10,20 @@ namespace LayerAwareBloom.Editor
         private static readonly string[] Fields = { "enabled", "renderingLayers", "threshold", "intensity", "tint",
             "clamp", "scatter", "maxIterations", "downscale", "highQualityFiltering" };
 
+        public override void OnEnable()
+        {
+            base.OnEnable();
+            // Wait until Unity has finished adding the bloom component to its profile.
+            EditorApplication.delayCall += CompleteInitialSetup;
+        }
+
+        private void CompleteInitialSetup()
+        {
+            if (this == null || target == null || !enableOverrides || EditorApplication.isPlayingOrWillChangePlaymode)
+                return;
+            BloomTonemappingSetup.CompleteInitialSetup((LayerBloomVolume)target);
+        }
+
         public override void OnInspectorGUI()
         {
             PropertyField(Unpack(serializedObject.FindProperty("enableBloom")));
@@ -36,25 +50,8 @@ namespace LayerAwareBloom.Editor
                 PropertyField(Unpack(serializedObject.FindProperty(field)));
             EditorGUILayout.HelpBox("Enable the override checkboxes for the settings this profile should control. " +
                 "A bloom group needs Rendering Layers and positive Intensity. Numeric settings blend with Volume weight; " +
-                "layer masks, switches and quality modes change discretely. Camera Post Processing can remain off.", MessageType.Info);
+                "layer masks, switches and quality modes change discretely. Unity Tonemapping requires camera Post Processing.", MessageType.Info);
         }
     }
 
-    [CustomEditor(typeof(HdrTonemappingFeature))]
-    public sealed class HdrTonemappingFeatureEditor : UnityEditor.Editor
-    {
-        public override void OnInspectorGUI()
-        {
-            serializedObject.Update();
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("tonemappingShader"));
-            var source = serializedObject.FindProperty("settingsSource");
-            EditorGUILayout.PropertyField(source);
-            if (source.enumValueIndex == (int)BloomSettingsSource.SceneVolumes)
-                EditorGUILayout.HelpBox("Add Layer Aware Bloom / Tonemapping to a scene Volume Profile. " +
-                    "Without an active override, this feature does nothing. Keep Unity's Tonemapping override disabled.", MessageType.Info);
-            else
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("mode"));
-            serializedObject.ApplyModifiedProperties();
-        }
-    }
 }

@@ -1,5 +1,45 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7583172091628385606
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97c23e3b12dc18c42a140437e53d3951, type: 3}
+  m_Name: Tonemapping
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.Tonemapping
+  active: 1
+  mode:
+    m_OverrideState: 1
+    m_Value: 1
+  neutralHDRRangeReductionMode:
+    m_OverrideState: 0
+    m_Value: 2
+  acesPreset:
+    m_OverrideState: 0
+    m_Value: 3
+  hueShiftAmount:
+    m_OverrideState: 0
+    m_Value: 0
+  detectPaperWhite:
+    m_OverrideState: 0
+    m_Value: 0
+  paperWhite:
+    m_OverrideState: 0
+    m_Value: 300
+  detectBrightnessLimits:
+    m_OverrideState: 0
+    m_Value: 1
+  minNits:
+    m_OverrideState: 0
+    m_Value: 0.005
+  maxNits:
+    m_OverrideState: 0
+    m_Value: 1000
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13,25 +53,9 @@ MonoBehaviour:
   m_Name: BloomGroups_LayerAwareBloom
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
   components:
-  - {fileID: 1432751880875972759}
-  - {fileID: 7995857239215755}
---- !u!114 &7995857239215755
-MonoBehaviour:
-  m_ObjectHideFlags: 3
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce24e5524ff249859f711f5a3b9b3199, type: 3}
-  m_Name: LayerTonemappingVolume
-  m_EditorClassIdentifier: LayerAwareBloom.Runtime::LayerAwareBloom.LayerTonemappingVolume
-  active: 0
-  mode:
-    m_OverrideState: 1
-    m_Value: 1
---- !u!114 &1432751880875972759
+  - {fileID: 4493492586439121120}
+  - {fileID: -7583172091628385606}
+--- !u!114 &4493492586439121120
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -43,7 +67,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4385e85448954c3a8180ff3c9203ae04, type: 3}
   m_Name: LayerBloomVolume
   m_EditorClassIdentifier: LayerAwareBloom.Runtime::LayerAwareBloom.LayerBloomVolume
-  active: 0
+  active: 1
+  tonemappingSetupComplete: 1
   enableBloom:
     m_OverrideState: 1
     m_Value: 1
@@ -58,27 +83,27 @@ MonoBehaviour:
         m_Bits: 2
     threshold:
       m_OverrideState: 1
-      m_Value: 1
+      m_Value: 0.9
     intensity:
       m_OverrideState: 1
-      m_Value: 5.2
+      m_Value: 1
     tint:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: {r: 1, g: 1, b: 1, a: 1}
     clamp:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 65472
     scatter:
-      m_OverrideState: 1
-      m_Value: 0.681
+      m_OverrideState: 0
+      m_Value: 0.7
     maxIterations:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 6
     downscale:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0
     highQualityFiltering:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0
     softKnee:
       m_OverrideState: 0
@@ -100,7 +125,7 @@ MonoBehaviour:
         m_Bits: 4
     threshold:
       m_OverrideState: 1
-      m_Value: 1
+      m_Value: 0.9
     intensity:
       m_OverrideState: 1
       m_Value: 3
@@ -114,22 +139,22 @@ MonoBehaviour:
       m_OverrideState: 1
       m_Value: 0.7
     maxIterations:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 6
     downscale:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0
     highQualityFiltering:
-      m_OverrideState: 1
-      m_Value: 1
+      m_OverrideState: 0
+      m_Value: 0
     softKnee:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0.5
     radius:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 1
     stopNaN:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0
   group3:
     enabled:
@@ -142,7 +167,7 @@ MonoBehaviour:
         m_Bits: 8
     threshold:
       m_OverrideState: 1
-      m_Value: 1
+      m_Value: 0.9
     intensity:
       m_OverrideState: 1
       m_Value: 3
@@ -165,13 +190,13 @@ MonoBehaviour:
       m_OverrideState: 1
       m_Value: 1
     softKnee:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0.5
     radius:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 1
     stopNaN:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0
   group4:
     enabled:
@@ -184,36 +209,36 @@ MonoBehaviour:
         m_Bits: 16
     threshold:
       m_OverrideState: 1
-      m_Value: 1
+      m_Value: 0.9
     intensity:
       m_OverrideState: 1
       m_Value: 3
     tint:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: {r: 1, g: 1, b: 1, a: 1}
     clamp:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 65472
     scatter:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0.7
     maxIterations:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 6
     downscale:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0
     highQualityFiltering:
-      m_OverrideState: 1
-      m_Value: 1
+      m_OverrideState: 0
+      m_Value: 0
     softKnee:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0.5
     radius:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 1
     stopNaN:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0
   group5:
     enabled:
@@ -226,36 +251,36 @@ MonoBehaviour:
         m_Bits: 32
     threshold:
       m_OverrideState: 1
-      m_Value: 1
+      m_Value: 0.9
     intensity:
       m_OverrideState: 1
-      m_Value: 3
+      m_Value: 2.5
     tint:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: {r: 1, g: 1, b: 1, a: 1}
     clamp:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 65472
     scatter:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0.7
     maxIterations:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 6
     downscale:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0
     highQualityFiltering:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0
     softKnee:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0.5
     radius:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 1
     stopNaN:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0
   group6:
     enabled:
@@ -268,7 +293,7 @@ MonoBehaviour:
         m_Bits: 64
     threshold:
       m_OverrideState: 1
-      m_Value: 1
+      m_Value: 0.9
     intensity:
       m_OverrideState: 1
       m_Value: 3
@@ -291,26 +316,26 @@ MonoBehaviour:
       m_OverrideState: 1
       m_Value: 0
     softKnee:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0.5
     radius:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 1
     stopNaN:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0
   enableColorGrading:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0
   exposure:
-    m_OverrideState: 1
+    m_OverrideState: 0
     m_Value: 0
   contrast:
-    m_OverrideState: 1
+    m_OverrideState: 0
     m_Value: 0
   saturation:
-    m_OverrideState: 1
+    m_OverrideState: 0
     m_Value: 0
   colorFilter:
-    m_OverrideState: 1
+    m_OverrideState: 0
     m_Value: {r: 1, g: 1, b: 1, a: 1}

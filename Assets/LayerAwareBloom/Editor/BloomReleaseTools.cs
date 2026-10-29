@@ -42,9 +42,6 @@ namespace LayerAwareBloom.Editor
                 bloom.Groups[0].renderingLayers = 2; bloom.Groups[0].threshold = 1; bloom.Groups[0].intensity = 2;
                 bloom.Groups[1].enabled = true; bloom.Groups[1].renderingLayers = 4;
                 bloom.Groups[1].intensity = 1; bloom.Groups[1].scatter = .45f;
-                var tone = ScriptableObject.CreateInstance<HdrTonemappingFeature>();
-                tone.name = "HDR Tonemapping";
-                AssetDatabase.AddObjectToAsset(tone, renderer); renderer.rendererFeatures.Add(tone); tone.Create();
                 // Keep URP's feature local-file-ID map consistent after adding subassets.
                 var rendererState = new SerializedObject(renderer);
                 var map = rendererState.FindProperty("m_RendererFeatureMap"); map.arraySize = renderer.rendererFeatures.Count;
@@ -56,16 +53,17 @@ namespace LayerAwareBloom.Editor
                 rendererState.ApplyModifiedPropertiesWithoutUndo();
                 var pipeline = UniversalRenderPipelineAsset.Create(renderer);
                 pipeline.name = "DemoPipeline"; pipeline.supportsHDR = true; pipeline.msaaSampleCount = 1;
+                pipeline.colorGradingMode = ColorGradingMode.HighDynamicRange;
                 pipeline.supportsCameraDepthTexture = true; pipeline.supportsCameraOpaqueTexture = true;
                 AssetDatabase.CreateAsset(pipeline, PipelinePath);
-                foreach (var asset in new UnityEngine.Object[] { bloom, tone, renderer, pipeline })
+                foreach (var asset in new UnityEngine.Object[] { bloom, renderer, pipeline })
                 { EditorUtility.SetDirty(asset); AssetDatabase.SaveAssetIfDirty(asset); }
 
                 var camera = new GameObject("Main Camera").AddComponent<Camera>();
                 camera.tag = "MainCamera"; camera.transform.position = new Vector3(0, 0, -8);
                 camera.orthographic = true; camera.orthographicSize = 3; camera.allowHDR = true; camera.allowMSAA = false;
                 camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = Color.black;
-                camera.GetUniversalAdditionalCameraData().renderPostProcessing = false;
+                camera.GetUniversalAdditionalCameraData().renderPostProcessing = true;
                 for (int i = 0; i < 3; i++)
                 {
                     var material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
@@ -109,9 +107,9 @@ namespace LayerAwareBloom.Editor
             foreach (string dependency in AssetDatabase.GetDependencies(paths, true))
                 if (dependency.StartsWith("Assets/") && !paths.Contains(dependency) && !AssetDatabase.IsValidFolder(dependency))
                     throw new InvalidOperationException("Release depends on an excluded asset: " + dependency);
-            AssetDatabase.ExportPackage(paths, "ReleaseArtifacts/LayerAwareBloom-1.0.0-rc1.unitypackage", ExportPackageOptions.Default);
+            AssetDatabase.ExportPackage(paths, "ReleaseArtifacts/LayerAwareBloom-1.0.0-rc2.unitypackage", ExportPackageOptions.Default);
             File.WriteAllLines("ReleaseArtifacts/PackageContents.txt", paths.OrderBy(p => p));
-            Debug.Log("Layer Aware Bloom: release candidate exported to ReleaseArtifacts.");
+            Debug.Log("[Layer Aware Bloom] Type: Package export, info: ReleaseArtifacts/LayerAwareBloom-1.0.0-rc2.unitypackage");
         }
 
         // Run in the disposable clean validation project only, never changes a customer's pipeline from a menu.

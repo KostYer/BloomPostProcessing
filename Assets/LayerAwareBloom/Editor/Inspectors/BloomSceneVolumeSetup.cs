@@ -23,6 +23,8 @@ namespace LayerAwareBloom.Editor
                 .FirstOrDefault(v => v.sharedProfile != null && v.sharedProfile.Has<LayerBloomVolume>());
             if (existing != null)
             {
+                BloomTonemappingSetup.EnsureTonemapping(existing.sharedProfile);
+                BloomTonemappingSetup.EnablePostProcessing(existing);
                 Selection.activeGameObject = existing.gameObject;
                 Debug.Log("This scene already has a Layer Aware Bloom profile. Select its overrides to edit the scene settings.", existing);
                 return existing;
@@ -36,16 +38,7 @@ namespace LayerAwareBloom.Editor
             var bloom = profile.Add<LayerBloomVolume>(true);
             bloom.CopyFrom(feature);
             AssetDatabase.AddObjectToAsset(bloom, profile);
-            var tone = AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(feature)).OfType<HdrTonemappingFeature>().FirstOrDefault();
-            if (tone != null)
-            {
-                var mapping = profile.Add<LayerTonemappingVolume>(true);
-                mapping.mode.Override(tone.isActive ? tone.Mode : HdrTonemappingMode.None);
-                AssetDatabase.AddObjectToAsset(mapping, profile);
-                Undo.RecordObject(tone, "Use Scene Volume Settings");
-                tone.SettingsSource = BloomSettingsSource.SceneVolumes;
-                EditorUtility.SetDirty(tone);
-            }
+            BloomTonemappingSetup.EnsureTonemapping(profile);
             EditorUtility.SetDirty(profile);
             AssetDatabase.SaveAssetIfDirty(profile);
             Undo.RecordObject(feature, "Use Scene Volume Settings");
@@ -57,6 +50,7 @@ namespace LayerAwareBloom.Editor
             var volume = Undo.AddComponent<Volume>(go);
             volume.isGlobal = true;
             volume.sharedProfile = profile;
+            BloomTonemappingSetup.EnablePostProcessing(volume);
             EditorSceneManager.MarkSceneDirty(scene);
             Selection.activeGameObject = go;
             SceneView.RepaintAll();

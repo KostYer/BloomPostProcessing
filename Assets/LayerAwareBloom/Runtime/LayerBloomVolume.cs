@@ -54,6 +54,11 @@ namespace LayerAwareBloom
     [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
     public sealed class LayerBloomVolume : VolumeComponent, IPostProcessComponent
     {
+#if UNITY_EDITOR
+        // Editor setup only. Remember the initial addition so removing Tonemapping stays intentional.
+        [SerializeField, HideInInspector] internal bool tonemappingSetupComplete;
+#endif
+
         public BoolParameter enableBloom = new(true);
         // Explicit fields: VolumeComponent discovers nested parameters, but does not traverse arrays.
         public LayerBloomGroupParameters group1 = new();

@@ -28,9 +28,8 @@ namespace LayerAwareBloom.Editor
         public static void Run()
         {
             var feature = BloomVerificationContext.FindFeature();
-            var tone = AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(feature)).OfType<HdrTonemappingFeature>().Single();
-            string featureJson = EditorJsonUtility.ToJson(feature), toneJson = EditorJsonUtility.ToJson(tone);
-            bool featureDirty = EditorUtility.IsDirty(feature), toneDirty = EditorUtility.IsDirty(tone);
+            string featureJson = EditorJsonUtility.ToJson(feature);
+            bool featureDirty = EditorUtility.IsDirty(feature);
             var previousScene = SceneManager.GetActiveScene(); var previousRT = RenderTexture.active;
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
             string temporaryScenePath = "Assets/LayerAwareBloom/Editor/Verification/VolumeCheck-"+Guid.NewGuid().ToString("N")+".unity";
@@ -41,8 +40,18 @@ namespace LayerAwareBloom.Editor
             void Check(bool result, string label) { if(!result) throw new Exception(label); count++; File.AppendAllText(Report,"OK: "+label+"\n"); }
             try
             {
+                var setupProfile=ScriptableObject.CreateInstance<VolumeProfile>();allocations.Add(setupProfile);
+                var setupBloom=setupProfile.Add<LayerBloomVolume>();allocations.Add(setupBloom);
+                BloomTonemappingSetup.CompleteInitialSetup(setupBloom);
+                Check(setupProfile.TryGet<Tonemapping>(out var setupTone) && setupTone.mode.overrideState && setupTone.mode.value==TonemappingMode.Neutral,
+                    "Adding layered bloom configures Unity Neutral tonemapping");
+                allocations.Add(setupTone);setupTone.mode.Override(TonemappingMode.ACES);
+                Check(BloomTonemappingSetup.EnsureTonemapping(setupProfile)==setupTone && setupTone.mode.value==TonemappingMode.ACES,
+                    "Existing Unity tonemapping is preserved without duplication");
+                setupProfile.Remove<Tonemapping>();
+                BloomTonemappingSetup.CompleteInitialSetup(setupBloom);
+                Check(!setupProfile.Has<Tonemapping>(),"Intentionally removed tonemapping is not re-added by Inspector setup");
                 feature.SettingsSource = BloomSettingsSource.SceneVolumes; feature.ShowFullscreen = false;
-                tone.SettingsSource = BloomSettingsSource.SceneVolumes; tone.SetActive(true);
                 var camera = new GameObject("Volume verification camera").AddComponent<Camera>(); camera.enabled=false;
                 camera.transform.position = new Vector3(10000,10000,-10); camera.orthographic=true; camera.orthographicSize=2;
                 camera.nearClipPlane=.1f; camera.farClipPlane=20; camera.cullingMask=1<<28;
@@ -69,7 +78,7 @@ namespace LayerAwareBloom.Editor
                 var go=new GameObject("Test Volume");go.layer=30;var volume=go.AddComponent<Volume>();volume.isGlobal=true;volume.priority=10000;
                 var profile=ScriptableObject.CreateInstance<VolumeProfile>();allocations.Add(profile);volume.sharedProfile=profile;
                 var bloom=profile.Add<LayerBloomVolume>(true);allocations.Add(bloom);
-                var mapping=profile.Add<LayerTonemappingVolume>(true);allocations.Add(mapping);
+                var mapping=profile.Add<Tonemapping>(true);allocations.Add(mapping);
                 for(int i=0;i<6;i++){var g=bloom.GetGroup(i);g.enabled.value=i==5;g.renderingLayers.value=2;g.threshold.value=0;g.intensity.value=1;}
                 Check(bloom.parameters.Count==84,"All six nested groups and grading parameters discovered by Volume framework");
                 var firstBloom = Capture(); var evaluated = VolumeManager.instance.stack.GetComponent<LayerBloomVolume>(); File.AppendAllText(Report, $"Diagnostic baseline {baseline}, output {firstBloom}, intensity {evaluated.group6.intensity.value}, mask {(uint)evaluated.group6.renderingLayers.value}, enabled {evaluated.group6.enabled.value}, bloom {evaluated.enableBloom.value}, source {feature.SettingsSource}\n");
@@ -104,13 +113,19 @@ namespace LayerAwareBloom.Editor
                 go.transform.position=Vector3.zero;
                 Check(Delta(Capture(),baseline)<.005f,"Local Volume outside trigger contributes nothing");
                 volume.isGlobal=true;
-                foreach(var mode in new[]{HdrTonemappingMode.Neutral,HdrTonemappingMode.ACES})
+                // Isolate built-in bloom from the project's default profiles during the PP integration check.
+                var unityBloom=profile.Add<Bloom>(true);allocations.Add(unityBloom);unityBloom.intensity.value=0;
+                data.renderPostProcessing=true;
+                foreach(var mode in new[]{TonemappingMode.Neutral,TonemappingMode.ACES})
                 {
                     mapping.mode.value=mode;var mapped=Capture();
-                    Check(mapped.r>0 && mapped.r<=1 && mapped.g<=1 && mapped.b<=1,$"Independent {mode} override maps scene after bloom");
+                    Check(mapped.r>0 && mapped.r<=1 && mapped.g<=1 && mapped.b<=1,$"Unity {mode} override maps scene after layered bloom");
                 }
-                mapping.mode.value=HdrTonemappingMode.None;
-                Check(Capture().r>3.8f,"Tonemapping None restores HDR bloom output");
+                mapping.mode.value=TonemappingMode.None;
+                Capture();
+                Check(VolumeManager.instance.stack.GetComponent<Tonemapping>().mode.value==TonemappingMode.None,"Unity Tonemapping None disables mapping");
+                data.renderPostProcessing=false;
+                Check(Capture().r>3.8f,"Bloom stays HDR with camera post-processing off");
                 bloom.enableBloom.value=false;bloom.enableColorGrading.value=true;bloom.exposure.value=1;
                 Check(Delta(Capture(),baseline*2)<.02f,"Scene grading works without bloom");
                 // Unity requires the first additive scene to have a path before opening another.
@@ -149,8 +164,7 @@ namespace LayerAwareBloom.Editor
             finally
             {
                 EditorJsonUtility.FromJsonOverwrite(featureJson,feature);feature.Create();
-                EditorJsonUtility.FromJsonOverwrite(toneJson,tone);tone.Create();
-                if(!featureDirty)EditorUtility.ClearDirty(feature);if(!toneDirty)EditorUtility.ClearDirty(tone);
+                if(!featureDirty)EditorUtility.ClearDirty(feature);
                 RenderTexture.active=previousRT;SceneManager.SetActiveScene(previousScene);EditorSceneManager.CloseScene(scene,true);
                 foreach(var item in allocations) if(item!=null)Object.DestroyImmediate(item);
                 if(File.Exists(temporaryScenePath)) AssetDatabase.DeleteAsset(temporaryScenePath);
