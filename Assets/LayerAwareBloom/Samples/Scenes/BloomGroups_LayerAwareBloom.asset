@@ -27,7 +27,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce24e5524ff249859f711f5a3b9b3199, type: 3}
   m_Name: LayerTonemappingVolume
   m_EditorClassIdentifier: LayerAwareBloom.Runtime::LayerAwareBloom.LayerTonemappingVolume
-  active: 1
+  active: 0
   mode:
     m_OverrideState: 1
     m_Value: 1
@@ -43,7 +43,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4385e85448954c3a8180ff3c9203ae04, type: 3}
   m_Name: LayerBloomVolume
   m_EditorClassIdentifier: LayerAwareBloom.Runtime::LayerAwareBloom.LayerBloomVolume
-  active: 1
+  active: 0
   enableBloom:
     m_OverrideState: 1
     m_Value: 1
