@@ -7,6 +7,20 @@ namespace LayerAwareBloom.Editor
 {
     internal static class BloomVerificationContext
     {
+        internal static IDisposable UseRendererSettings(RenderingLayerBloomFeature feature) => new RendererSettingsScope(feature);
+
+        private sealed class RendererSettingsScope : IDisposable
+        {
+            private readonly RenderingLayerBloomFeature feature;
+            private readonly BloomSettingsSource previous;
+            public RendererSettingsScope(RenderingLayerBloomFeature feature)
+            {
+                this.feature = feature; previous = feature.SettingsSource;
+                feature.SettingsSource = BloomSettingsSource.RendererAsset;
+            }
+            public void Dispose() => feature.SettingsSource = previous;
+        }
+
         internal static RenderingLayerBloomFeature FindFeature()
         {
             var pipeline = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;

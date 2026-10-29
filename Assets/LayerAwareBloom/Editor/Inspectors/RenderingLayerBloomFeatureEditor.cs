@@ -73,6 +73,25 @@ namespace LayerAwareBloom.Editor
             EditorGUILayout.PropertyField(serializedObject.FindProperty("bloomShader"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("uiBloomShader"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("uiNativeShader"));
+            var settingsSource = serializedObject.FindProperty("settingsSource");
+            EditorGUILayout.PropertyField(settingsSource);
+            if (settingsSource.enumValueIndex == (int)BloomSettingsSource.SceneVolumes)
+            {
+                EditorGUILayout.HelpBox("Bloom and grading settings come from Layer Aware Bloom / Bloom in the camera's scene Volume Profiles. " +
+                    "No active settings means no effect. Use a Global Volume for scene-wide settings, or local Volumes for regions. " +
+                    "Renderer Asset mode is retained for legacy setups only.", MessageType.Info);
+                serializedObject.ApplyModifiedProperties();
+                if (GUILayout.Button("Create Scene Volume from Existing Renderer Settings"))
+                    BloomSceneVolumeSetup.Create((RenderingLayerBloomFeature)target);
+                serializedObject.Update();
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField("Debug Preview", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("showFullscreen"));
+                var preview = serializedObject.FindProperty("previewGroup");
+                preview.intValue = EditorGUILayout.Popup("Preview Group", preview.intValue + 1, PreviewOptions) - 1;
+                serializedObject.ApplyModifiedProperties();
+                return;
+            }
             EditorGUILayout.Space();
             var blur = serializedObject.FindProperty("enableBloom");
             EditorGUILayout.PropertyField(blur);

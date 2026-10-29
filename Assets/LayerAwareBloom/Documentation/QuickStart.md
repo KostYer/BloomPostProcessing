@@ -9,16 +9,18 @@ Use Unity 6000.3.14f1 with URP 17.3.0, the Universal Renderer, Render Graph, Lin
 1. Select the URP asset used by your current Quality level (or Graphics settings when there is no Quality override). Enable HDR.
 2. Open that asset's Universal Renderer. Select **Add Renderer Feature > Rendering Layer Bloom**.
 3. Enable **Allow HDR** on the base camera. Camera Post Processing may remain off.
-4. Expand Group 1. Select a Rendering Layer, use intensity 1, threshold 0.9, scatter 0.7, and Half downscale as a starting point.
+4. Leave the feature's Settings Source at **Scene Volumes**. Add a Global Volume in the scene, create a profile, and add **Layer Aware Bloom / Bloom**. Expand Group 1, check the override boxes for Rendering Layers and Intensity, select a layer, and use intensity 1. Threshold 0.9, scatter 0.7, and Half downscale are starting defaults.
 5. Add the selected Rendering Layer to your object's Renderer. Keep the layers needed for its lighting. For a VFX hierarchy, use **Rendering Layer Assigner > Apply to Root and Children**.
 6. Use a bright HDR emissive material. Threshold is applied to the rendered brightness, not just a material's emission field.
-7. Optionally add **HDR Tonemapping** and choose Neutral or ACES. Disable Unity's Tonemapping override when using it.
+7. Optionally add the **HDR Tonemapping** renderer feature, then add **Layer Aware Bloom / Tonemapping** to the scene profile and override Mode to Neutral or ACES. Disable Unity's Tonemapping override when using it.
+
+Use a separate profile in each scene. Without an active matching Volume, these effects are off. For an existing setup, the renderer feature's **Create Scene Volume from Existing Renderer Settings** button copies its six groups, grading, and tonemapping into a scene profile. Save the scene afterward. Camera Volume Layer Mask, Volume weight, priority, and local colliders work normally, even with camera Post Processing off. Additively loaded Global Volumes can affect the same camera unless separated by its Volume Layer Mask.
 
 Groups own sources in inspector order: the first matching active group wins. Disabled or zero-output groups do not claim objects. Later groups can independently control other sources.
 
 ## Optional additions and reset
 
-Expand **Optional Additions** to expose Soft Knee, Radius, and Stop NaN / Infinity. Defaults (0.5, 1, off) reproduce the original Unity-style filtering. Collapsing the foldout hides controls without disabling their effects. **Reset Group to Defaults** resets all settings in that group, including its name, enabled state, and Rendering Layers. Group 1 defaults to enabled/Default layer; spare groups default to disabled/empty masks. Undo restores the previous group settings.
+Expand **Optional Additions** to expose Soft Knee, Radius, and Stop NaN / Infinity. Defaults (0.5, 1, off) reproduce the original Unity-style filtering. Collapsing the foldout hides controls without disabling their effects. In a Volume, **Reset Group to Defaults** clears that group's overrides and returns its mask/intensity to zero. The legacy Renderer Asset inspector retains its original defaults and reset behavior. Undo restores the previous settings.
 
 ## Getting Started sample
 

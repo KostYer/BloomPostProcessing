@@ -85,6 +85,7 @@ namespace LayerAwareBloom.Editor
                 smokeState.FindProperty("feature").objectReferenceValue = bloom;
                 smokeState.FindProperty("targetCamera").objectReferenceValue = camera;
                 smokeState.ApplyModifiedPropertiesWithoutUndo();
+                BloomSceneVolumeSetup.Create(bloom, ScenePath);
                 EditorSceneManager.SaveScene(scene, ScenePath);
             }
             finally

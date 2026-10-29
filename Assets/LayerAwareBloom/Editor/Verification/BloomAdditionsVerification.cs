@@ -150,6 +150,7 @@ namespace LayerAwareBloom.Editor
         static void VerifyRenderGraph()
         {
             var feature = BloomVerificationContext.FindFeature();
+            using var rendererSettings = BloomVerificationContext.UseRendererSettings(feature);
             string original = EditorJsonUtility.ToJson(feature);
             bool dirty = EditorUtility.IsDirty(feature);
             try

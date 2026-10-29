@@ -59,22 +59,26 @@ namespace LayerAwareBloom.Editor
                 EditorGUILayout.HelpBox("Enable HDR in the active URP asset to preserve bright bloom sources.", MessageType.Warning);
             if (QualitySettings.activeColorSpace != ColorSpace.Linear)
                 EditorGUILayout.HelpBox("Gamma color space is not validated. The supported setup uses Linear color space.", MessageType.Warning);
-            if (!feature.isActive || !serialized.FindProperty("enableBloom").boolValue) return;
+            if (!feature.isActive || (feature.SettingsSource == BloomSettingsSource.RendererAsset &&
+                !serialized.FindProperty("enableBloom").boolValue)) return;
             foreach (string field in new[] { "bloomShader", "uiBloomShader", "uiNativeShader" })
                 if (serialized.FindProperty(field).objectReferenceValue == null)
                     EditorGUILayout.HelpBox("A bloom shader reference is missing. Recreate the renderer feature or assign its packaged shaders before building.", MessageType.Warning);
-            var groups = serialized.FindProperty("groups");
-            bool anyOutput = false;
-            for (int i = 0; i < groups.arraySize; i++)
+            if (feature.SettingsSource == BloomSettingsSource.RendererAsset)
             {
-                var group = (RenderingLayerBloomFeature.BloomGroupSettings)groups.GetArrayElementAtIndex(i).boxedValue;
-                if (!group.enabled) continue;
-                if ((uint)group.renderingLayers == 0)
-                    EditorGUILayout.HelpBox($"Group {i + 1} is enabled but has no Rendering Layers selected.", MessageType.Warning);
-                anyOutput |= (uint)group.renderingLayers != 0 && group.intensity > 0 && group.clamp > 0 &&
-                    (group.tint.r > 0 || group.tint.g > 0 || group.tint.b > 0);
+                var groups = serialized.FindProperty("groups");
+                bool anyOutput = false;
+                for (int i = 0; i < groups.arraySize; i++)
+                {
+                    var group = (RenderingLayerBloomFeature.BloomGroupSettings)groups.GetArrayElementAtIndex(i).boxedValue;
+                    if (!group.enabled) continue;
+                    if ((uint)group.renderingLayers == 0)
+                        EditorGUILayout.HelpBox($"Group {i + 1} is enabled but has no Rendering Layers selected.", MessageType.Warning);
+                    anyOutput |= (uint)group.renderingLayers != 0 && group.intensity > 0 && group.clamp > 0 &&
+                        (group.tint.r > 0 || group.tint.g > 0 || group.tint.b > 0);
+                }
+                if (!anyOutput) EditorGUILayout.HelpBox("No group currently produces bloom. Enable a group, select its Rendering Layers, and use positive intensity/clamp and a nonblack tint.", MessageType.Info);
             }
-            if (!anyOutput) EditorGUILayout.HelpBox("No group currently produces bloom. Enable a group, select its Rendering Layers, and use positive intensity/clamp and a nonblack tint.", MessageType.Info);
             foreach (var state in States.Values.Where(s => s.feature == feature && s.camera != null &&
                 EditorApplication.timeSinceStartup - s.time <= 5))
             {

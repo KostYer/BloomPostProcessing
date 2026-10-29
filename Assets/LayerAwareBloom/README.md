@@ -9,7 +9,7 @@ This package contains two independent URP renderer features:
 - **Rendering Layer Bloom** selects opaque surfaces and transparent renderers by Rendering Layer, builds up to six independent bloom groups, and optionally grades the combined image.
 - **HDR Tonemapping** maps the whole HDR image to SDR with **Neutral** or **ACES**. **None**, or disabling the feature, bypasses the pass.
 
-Add them from your Universal Renderer asset's **Add Renderer Feature** menu. HDR Tonemapping works on its own and does not require the bloom feature, a Volume, or the camera's Post Processing checkbox.
+Add them from your Universal Renderer asset's **Add Renderer Feature** menu. Their default **Settings Source** is **Scene Volumes**. Configure **Layer Aware Bloom / Bloom** and **Layer Aware Bloom / Tonemapping** as separate overrides in a scene Volume Profile. Tonemapping works without the bloom feature, and both work with the camera's Post Processing checkbox off.
 
 ## Project layout
 
@@ -34,10 +34,20 @@ Project-wide pipeline assets are in `Assets/Settings/Rendering/` (DesktopRendere
 ## Standalone setup
 
 1. Enable HDR on the URP asset and camera.
-2. Add Rendering Layer Bloom and choose the groups' Rendering Layers.
+2. Add Rendering Layer Bloom. Create a Global Volume in the scene with a unique profile, add **Layer Aware Bloom / Bloom**, and override a group's Rendering Layers and Intensity (start at 1).
 3. Keep any lighting layers on the selected renderers as well. Rendering Layers also control which lights illuminate a surface.
-4. Add HDR Tonemapping and start with Neutral. ACES gives a different, more filmic highlight/color response.
+4. Add HDR Tonemapping and add **Layer Aware Bloom / Tonemapping** to the scene profile. Override Mode to Neutral or ACES.
 5. The camera's Post Processing option can remain off.
+
+### Scene settings and migration
+
+With **Scene Volumes**, an absent, disabled, zero-weight, or camera-excluded override contributes no effect. Numeric parameters blend using Volume weight, priority, and local collider distance. Rendering Layer masks, enabled flags, iteration counts, and enum modes switch discretely. New Volume groups have empty masks and intensity zero; enable the override checkboxes for values a profile should control. HDR grading stays in the Bloom override and works even with Enable Bloom off.
+
+Use **Create Scene Volume from Existing Renderer Settings** on the bloom feature (also under Tools / Layer Aware Bloom) to copy all six groups, grading, and the renderer's tonemapping mode into a new scene profile. Save the scene after creating the Volume. Existing profiles are selected rather than overwritten. The original Renderer settings remain available through the explicit **Renderer Asset** legacy mode; they are not a fallback when Scene Volumes has no matching profile.
+
+A Global Volume is a scene object, not an automatic scene boundary: additively loaded scenes can contribute to the same camera, just like Unity post-processing. Use unique profiles for independent scene settings, and the camera's **Volume Layer Mask** to separate cameras/loaded scenes. This is the GameObject layer of the Volume, separate from the Rendering Layers selecting glowing objects. Via Scripting Volume update mode requires the normal camera Volume-stack update API. Custom SingleCameraRequest callers must evaluate the intended stack themselves; StandardRequest runs URP's normal per-camera evaluation.
+
+**Tools / Layer Aware Bloom / Verify Scene Volumes** checks settings isolation, numeric blending, override checkboxes, local/global Volumes, disabling/unloading, standalone tonemapping, grading, and scene-instance demo cycling. The current DX12/Linear fixture passes 23 checks when the development sample is installed. The transparent/VFX regression also passes with explicit legacy test settings. Reports are written under ignored `Temp/`; the fixture restores renderer state and removes its temporary scenes.
 
 The package runs in this order regardless of the order of these two features in the inspector:
 
@@ -61,7 +71,7 @@ Each group has a collapsible **Optional Additions** inspector section, initially
 - **Radius: 1**. Multiplies horizontal and vertical blur sample spacing, with a conservative range of 0.5–1.5. Lower values tighten the glow; higher values widen it. Scatter, downscale, and pyramid iterations still affect spread. The default retains the original taps and weights; this does not replace the Gaussian pyramid. At resolutions with only one pyramid level there are no Gaussian blur passes, so radius has no effect.
 - **Stop NaN / Infinity: off**. When enabled, one extra full-resolution pass removes pixels containing invalid RGB from the selected source after transparent/UI capture and before filtering. Valid source pixels are preserved. This protects bloom, not the original scene color or the raw source debug preview. It adds a full-resolution HDR texture and draw per enabled group.
 
-**Reset Group to Defaults** sits outside the optional foldout and restores every setting in that group, including the core bloom settings, optional additions, name, enabled state, and rendering layers. Defaults match a fresh feature: Group 1 is enabled on the Default rendering layer; Groups 2–6 are disabled with empty layer masks. Other groups and feature-wide settings are retained. The button supports the normal Inspector Undo/Redo workflow.
+**Reset Group to Defaults** sits outside the optional foldout. In a Volume it clears that group's overrides and resets the mask/intensity to zero. In the legacy Renderer Asset inspector it restores every setting, including the name: Group 1 is enabled on Default, and Groups 2–6 are disabled with empty masks. Other groups are retained. Both support the normal Inspector Undo/Redo workflow.
 
 ### Assigning a VFX hierarchy
 
@@ -89,7 +99,7 @@ Opaque selection is captured before normal transparency rendering, so unselected
 
 Run **Tools > Layer Aware Bloom > Verify Transparent Sources** to check HDR particles, alpha, additive blending, layer exclusion, opaque occlusion, bloom spread, and the imported fire prefab when present. The check discovers the active URP asset's default renderer, uses a temporary preview scene, restores feature settings, and writes its report and captures under `Temp/`.
 
-Tonemapping has its own C# settings, material, shader, and Render Graph pass. It uses shared SRP Core color-math functions, not Unity's post-processing passes, Volume settings, or grading LUT. The shader reference is serialized in the renderer feature so it can be included in builds.
+Tonemapping has its own Volume override, material, shader, and Render Graph pass. It uses SRP Core's Volume framework and color math, without Unity's built-in Bloom/Tonemapping overrides, post-processing passes, or grading LUT. The shader reference remains serialized in the renderer feature for builds.
 
 Use one tonemapper. Leave Unity's Tonemapping override disabled when using HDR Tonemapping. If Unity post-processing is enabled, it runs before HDR Tonemapping, so Unity bloom also receives HDR values. Use HDR Color Grading mode on the URP asset for this mixed setup. For the standalone setup, camera Post Processing can remain off.
 

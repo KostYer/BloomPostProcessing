@@ -17,6 +17,8 @@ namespace LayerAwareBloom
     [DisallowMultipleRendererFeature("HDR Tonemapping")]
     public sealed class HdrTonemappingFeature : ScriptableRendererFeature
     {
+        [SerializeField] private BloomSettingsSource settingsSource = BloomSettingsSource.SceneVolumes;
+        public BloomSettingsSource SettingsSource { get => settingsSource; set => settingsSource = value; }
         [SerializeField] private Shader tonemappingShader;
         [Tooltip("Maps the whole HDR image to an SDR display range after bloom and grading. " +
             "Use one tonemapper: disable the built-in Tonemapping override when this is enabled.")]
@@ -49,6 +51,12 @@ namespace LayerAwareBloom
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             var camera = renderingData.cameraData;
+            var mode = this.mode;
+            if (settingsSource == BloomSettingsSource.SceneVolumes)
+            {
+                var volume = VolumeManager.instance.stack?.GetComponent<LayerTonemappingVolume>();
+                mode = volume != null && volume.active ? volume.mode.value : HdrTonemappingMode.None;
+            }
             if (material == null || mode == HdrTonemappingMode.None ||
                 camera.renderType != CameraRenderType.Base ||
                 (camera.cameraType != CameraType.Game && camera.cameraType != CameraType.SceneView))

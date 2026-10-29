@@ -287,6 +287,55 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1589066324}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &79344402
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 79344404}
+  - component: {fileID: 79344403}
+  m_Layer: 0
+  m_Name: Layer Aware Bloom Volume
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &79344403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 79344402}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
+  m_IsGlobal: 1
+  priority: 0
+  blendDistance: 0
+  weight: 1
+  sharedProfile: {fileID: 11400000, guid: a4348bf506efd6a48886e532c846e0cd, type: 2}
+--- !u!4 &79344404
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 79344402}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &82984423
 GameObject:
   m_ObjectHideFlags: 0
@@ -810,7 +859,7 @@ MonoBehaviour:
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
   m_RenderPostProcessing: 1
-  m_Antialiasing: 0
+  m_Antialiasing: 2
   m_AntialiasingQuality: 2
   m_StopNaN: 0
   m_Dithering: 0
@@ -8423,6 +8472,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2134893311}
   - component: {fileID: 2134893312}
+  - component: {fileID: 2134893313}
   m_Layer: 0
   m_Name: SceneController
   m_TagString: Untagged
@@ -8473,6 +8523,19 @@ MonoBehaviour:
   _maxDistance: 4.5
   _orbitCamera: {fileID: 330585545}
   _cameraOrbitSpeed: 10
+  _bloomFeature: {fileID: 7823412291645092100, guid: f288ae1f4751b564a96ac7587541f7a2, type: 2}
+--- !u!114 &2134893313
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2134893309}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a62dca2e5ba144ee81926c7e45ffdf63, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: LayerAwareBloom.Samples::BloomCycleDemo
   _bloomFeature: {fileID: 7823412291645092100, guid: f288ae1f4751b564a96ac7587541f7a2, type: 2}
   _cycleBloom: 1
   _bloomCycleInterval: 3
@@ -8754,6 +8817,7 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 330585546}
+  - {fileID: 79344404}
   - {fileID: 832575519}
   - {fileID: 2134893311}
   - {fileID: 657649134}

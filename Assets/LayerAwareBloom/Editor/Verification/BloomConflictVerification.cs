@@ -17,6 +17,7 @@ namespace LayerAwareBloom.Editor
         public static void Run()
         {
             var feature = BloomVerificationContext.FindFeature();
+            using var rendererSettings = BloomVerificationContext.UseRendererSettings(feature);
             string original = EditorJsonUtility.ToJson(feature);
             bool wasDirty = EditorUtility.IsDirty(feature);
             // VolumeManager intentionally culls preview-stage Volumes. Use an isolated additive

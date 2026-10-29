@@ -69,6 +69,7 @@ MonoBehaviour:
   m_Name: Rendering Layer Bloom
   m_EditorClassIdentifier: LayerAwareBloom.Runtime::LayerAwareBloom.RenderingLayerBloomFeature
   m_Active: 1
+  settingsSource: 0
   groups:
   - name: Group 1
     enabled: 1
@@ -201,5 +202,6 @@ MonoBehaviour:
   m_Name: HDR Tonemapping
   m_EditorClassIdentifier: LayerAwareBloom.Runtime::LayerAwareBloom.HdrTonemappingFeature
   m_Active: 1
+  settingsSource: 0
   tonemappingShader: {fileID: 4800000, guid: 71f853b300010444fb17e864f50a825d, type: 3}
   mode: 1

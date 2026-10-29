@@ -27,6 +27,9 @@ namespace LayerAwareBloom.Samples
             string original = JsonUtility.ToJson(feature);
             try
             {
+                // This filter smoke test intentionally drives the legacy settings API directly.
+                // Scene Volume isolation/blending has a separate verification fixture.
+                feature.SettingsSource = BloomSettingsSource.RendererAsset;
                 target.Create();
                 foreach (string shaderName in new[] { "RenderingLayerBloom", "HdrTonemapping", "UIBloomSource", "UIBloomNative" })
                 {

@@ -2,9 +2,11 @@ using System.Collections.Generic;
 using LayerAwareBloom;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class SceneController : MonoBehaviour
 {
+    private const float LabelFadeDuration = 0.15f;
     [SerializeField] private Transform _pivot;
     [Tooltip("Movement roots. Only each root's child mesh rotates.")]
     [SerializeField] private List<Transform> _cubes = new List<Transform>();
@@ -22,28 +24,22 @@ public class SceneController : MonoBehaviour
     [Tooltip("Camera orbit speed in degrees per second. Negative values reverse direction.")]
     [SerializeField] private float _cameraOrbitSpeed = 10f;
 
-    [Header("Bloom cycle")]
+    [Header("Bloom status labels")]
+    [Tooltip("Bloom feature whose settings drive the sample's no-bloom labels.")]
     [SerializeField] private RenderingLayerBloomFeature _bloomFeature;
-    [SerializeField] private bool _cycleBloom = true;
-    [Tooltip("Seconds each bloom group stays disabled before moving to the next.")]
-    [SerializeField, Min(0.1f)] private float _bloomCycleInterval = 3f;
 
     private readonly List<CubeMotion> _motions = new List<CubeMotion>();
     private Vector3 _cameraStartOffset;
     private float _cameraOrbitAngle;
     private bool _cameraRotating = true;
-    private readonly List<RenderingLayerBloomFeature.BloomGroupSettings> _cycleGroups = new();
-    private int _disabledBloomGroup = -1;
-    private float _bloomCycleElapsed;
+    private LayerBloomVolume _sceneBloom;
 
     private sealed class CubeMotion
     {
         public Transform Cube;
         public Transform Mesh;
         public MeshRenderer Renderer;
-        public TMP_Text[] Labels;
-        public bool[] OriginalLabelVisibility;
-        public bool[] OriginalLabelActive;
+        public BloomLabel[] Labels;
         public Vector3 OrbitRight;
         public Vector3 OrbitForward;
         public float OrbitRadius;
@@ -51,6 +47,25 @@ public class SceneController : MonoBehaviour
         public float MoveSpeed;
         public Vector3 RotationAxis;
         public float RotationSpeed;
+    }
+
+    private sealed class BloomLabel
+    {
+        public TMP_Text Text;
+        public CanvasGroup Group;
+        public bool OriginalEnabled, OriginalActive;
+        public float OriginalAlpha;
+        public float StartAlpha, TargetAlpha;
+        public double FadeStartedAt;
+
+        public void ResetFade()
+        {
+            if (Group == null) return;
+            // Original visibility is only for restoration, never the start of a fade-in.
+            Group.alpha = 0f;
+            StartAlpha = TargetAlpha = 0f;
+            FadeStartedAt = Time.timeAsDouble;
+        }
     }
 
     private void Start()
@@ -81,7 +96,6 @@ public class SceneController : MonoBehaviour
                 Mesh = meshRenderer != null && meshRenderer.transform != cube
                     ? meshRenderer.transform : null,
                 Renderer = meshRenderer,
-                Labels = cube.GetComponentsInChildren<TMP_Text>(true),
                 OrbitRight = orbitRotation * Vector3.right,
                 OrbitForward = orbitRotation * Vector3.forward,
                 OrbitRadius = radius * Mathf.Pow(Random.value, 1f / 3f),
@@ -89,22 +103,30 @@ public class SceneController : MonoBehaviour
                 RotationAxis = Random.onUnitSphere,
                 RotationSpeed = RandomSpeed(_rotspeedMin, _rotspeedMax)
             };
-            motion.OriginalLabelVisibility = new bool[motion.Labels.Length];
-            motion.OriginalLabelActive = new bool[motion.Labels.Length];
-            for (int i = 0; i < motion.Labels.Length; i++)
+            var texts = cube.GetComponentsInChildren<TMP_Text>(true);
+            motion.Labels = new BloomLabel[texts.Length];
+            for (int i = 0; i < texts.Length; i++)
             {
-                motion.OriginalLabelVisibility[i] = motion.Labels[i].enabled;
-                motion.OriginalLabelActive[i] = motion.Labels[i].gameObject.activeSelf;
+                var group = texts[i].GetComponent<CanvasGroup>();
+                if (group == null)
+                {
+                    group = texts[i].gameObject.AddComponent<CanvasGroup>();
+                    group.interactable = false;
+                    group.blocksRaycasts = false;
+                }
+                motion.Labels[i] = new BloomLabel {
+                    Text = texts[i], Group = group, OriginalAlpha = group.alpha,
+                    OriginalEnabled = texts[i].enabled, OriginalActive = texts[i].gameObject.activeSelf
+                };
+                motion.Labels[i].ResetFade();
             }
             cube.position = center + motion.OrbitRight * motion.OrbitRadius;
             _motions.Add(motion);
         }
-        StartBloomCycle();
     }
 
     private void Update()
     {
-        UpdateBloomCycle();
         Vector3 center = _pivot != null ? _pivot.position : transform.position;
         float radius = Mathf.Max(0f, _maxDistance);
         float deltaTime = Time.deltaTime;
@@ -136,66 +158,36 @@ public class SceneController : MonoBehaviour
     {
         // Start handles the first enable, after the cube references are cached.
         if (_motions.Count > 0)
-            StartBloomCycle();
+        {
+            foreach (var motion in _motions)
+                foreach (var label in motion.Labels)
+                    label.ResetFade();
+        }
     }
 
     private void OnDisable()
     {
-        StopBloomCycle();
         foreach (CubeMotion motion in _motions)
-            for (int i = 0; i < motion.Labels.Length; i++)
-                if (motion.Labels[i] != null)
+            foreach (var label in motion.Labels)
+                if (label.Text != null)
                 {
-                    motion.Labels[i].enabled = motion.OriginalLabelVisibility[i];
-                    motion.Labels[i].gameObject.SetActive(motion.OriginalLabelActive[i]);
+                    if (label.Group != null) label.Group.alpha = label.OriginalAlpha;
+                    label.Text.enabled = label.OriginalEnabled;
+                    label.Text.gameObject.SetActive(label.OriginalActive);
                 }
     }
 
-    private void StartBloomCycle()
+    private void ResolveSceneBloom()
     {
-        if (!_cycleBloom || _bloomFeature == null || _cycleGroups.Count > 0)
-            return;
-
-        // Only cycle groups that were enabled originally; leave other settings alone.
-        foreach (var group in _bloomFeature.Groups)
-            if (group.enabled && (uint)group.renderingLayers != 0)
-                _cycleGroups.Add(group);
-
-        if (_cycleGroups.Count == 0)
-            return;
-
-        _bloomCycleElapsed = 0f;
-        _disabledBloomGroup = -1;
-        AdvanceBloomCycle();
-    }
-
-    private void UpdateBloomCycle()
-    {
-        if (!_cycleBloom || _bloomFeature == null)
-        {
-            StopBloomCycle();
-            return;
-        }
-
-        StartBloomCycle();
-        if (_cycleGroups.Count == 0)
-            return;
-
-        _bloomCycleElapsed += Time.deltaTime;
-        float interval = Mathf.Max(0.1f, _bloomCycleInterval);
-        if (_bloomCycleElapsed >= interval)
-        {
-            _bloomCycleElapsed %= interval;
-            AdvanceBloomCycle();
-        }
-    }
-
-    private void AdvanceBloomCycle()
-    {
-        if (_disabledBloomGroup >= 0)
-            _cycleGroups[_disabledBloomGroup].enabled = true;
-        _disabledBloomGroup = (_disabledBloomGroup + 1) % _cycleGroups.Count;
-        _cycleGroups[_disabledBloomGroup].enabled = false;
+        if (_sceneBloom != null) return;
+        foreach (var root in gameObject.scene.GetRootGameObjects())
+            foreach (var volume in root.GetComponentsInChildren<Volume>())
+                if (volume.isActiveAndEnabled && volume.sharedProfile != null && volume.sharedProfile.Has<LayerBloomVolume>())
+                {
+                    // Volume.profile creates a scene-instance copy; never animate the shared asset.
+                    volume.profile.TryGet(out _sceneBloom);
+                    return;
+                }
     }
 
     private void UpdateBloomLabels()
@@ -205,9 +197,22 @@ public class SceneController : MonoBehaviour
 
         uint enabledLayers = 0;
         if (_bloomFeature.isActive)
-            foreach (var group in _bloomFeature.Groups)
-                if (group.enabled && group.intensity > 0f)
-                    enabledLayers |= (uint)group.renderingLayers;
+        {
+            if (_bloomFeature.SettingsSource == BloomSettingsSource.SceneVolumes)
+            {
+                ResolveSceneBloom();
+                if (_sceneBloom != null && _sceneBloom.enableBloom.value)
+                    for (int i = 0; i < RenderingLayerBloomFeature.GroupCount; i++)
+                    {
+                        var group = _sceneBloom.GetGroup(i);
+                        if (group.enabled.value && group.intensity.value > 0) enabledLayers |= (uint)group.renderingLayers.value;
+                    }
+            }
+            else
+                foreach (var group in _bloomFeature.Groups)
+                    if (group.enabled && group.intensity > 0f)
+                        enabledLayers |= (uint)group.renderingLayers;
+        }
 
         foreach (CubeMotion motion in _motions)
         {
@@ -218,28 +223,27 @@ public class SceneController : MonoBehaviour
             // Read the actual mesh mask each frame, not the cube's list index or
             // the last cycle selection. Any enabled matching group supplies bloom.
             bool noBloom = (layers & enabledLayers) == 0;
-            foreach (TMP_Text label in motion.Labels)
-                if (label != null)
+            foreach (var label in motion.Labels)
+                if (label.Text != null && label.Group != null)
                 {
-                    label.enabled = noBloom;
-                    if (label.gameObject.activeSelf != noBloom)
-                        label.gameObject.SetActive(noBloom);
+                    // Keep the text active through both fades; visibility comes from alpha.
+                    label.Text.enabled = true;
+                    if (!label.Text.gameObject.activeSelf)
+                        label.Text.gameObject.SetActive(true);
+                    float target = noBloom ? 1f : 0f;
+                    if (label.TargetAlpha != target)
+                    {
+                        label.StartAlpha = label.Group.alpha;
+                        label.TargetAlpha = target;
+                        label.FadeStartedAt = Time.timeAsDouble;
+                    }
+                    // Start at t=0 on the change frame. Its deltaTime belongs to the
+                    // previous state and must not consume the beginning of this fade.
+                    float progress = (float)((Time.timeAsDouble - label.FadeStartedAt) / LabelFadeDuration);
+                    label.Group.alpha = Mathf.Lerp(label.StartAlpha, label.TargetAlpha,
+                        Mathf.Clamp01(progress));
                 }
         }
-    }
-
-    private void StopBloomCycle()
-    {
-        if (_cycleGroups.Count == 0)
-            return;
-
-        // Renderer-feature settings are assets: restore them when leaving Play mode
-        // or disabling this component so the demo never leaves a group switched off.
-        foreach (var group in _cycleGroups)
-            group.enabled = true;
-        _cycleGroups.Clear();
-        _disabledBloomGroup = -1;
-        _bloomCycleElapsed = 0f;
     }
 
     private void LateUpdate()

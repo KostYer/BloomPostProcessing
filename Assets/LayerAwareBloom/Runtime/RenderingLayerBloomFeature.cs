@@ -20,6 +20,11 @@ namespace LayerAwareBloom
     public sealed class RenderingLayerBloomFeature : ScriptableRendererFeature
     {
         public const int GroupCount = 6;
+        [SerializeField] private BloomSettingsSource settingsSource = BloomSettingsSource.SceneVolumes;
+        public BloomSettingsSource SettingsSource { get => settingsSource; set => settingsSource = value; }
+        public bool BloomEnabled => enableBloom;
+        private readonly BloomGroupSettings[] volumeGroups = new BloomGroupSettings[GroupCount];
+        private readonly HdrColorGradingSettings volumeGrading = new();
 
 #if UNITY_EDITOR
         // Editor diagnostics subscribe here; no editor assemblies or checks enter player builds.
@@ -143,6 +148,7 @@ namespace LayerAwareBloom
 
         public override void Create()
         {
+            for (int i = 0; i < GroupCount; i++) volumeGroups[i] ??= new BloomGroupSettings();
             RenderPipelineManager.beginCameraRendering -= CaptureContext;
             RenderPipelineManager.beginCameraRendering += CaptureContext;
             // Register after uGUI's material rebuild callback, before native Canvas batching.
@@ -189,7 +195,9 @@ namespace LayerAwareBloom
 
         private void PrepareUI()
         {
-            if (isActive && (enableBloom || showFullscreen)) uiCapture?.PrepareNativeUI();
+            // Canvas batching precedes per-camera Volume evaluation; prepare wrappers for any
+            // potential camera, while the actual capture is gated by that camera's evaluated settings.
+            if (isActive && (settingsSource == BloomSettingsSource.SceneVolumes || enableBloom || showFullscreen)) uiCapture?.PrepareNativeUI();
             else uiCapture?.RestoreNativeMaterials();
         }
 
@@ -209,13 +217,27 @@ namespace LayerAwareBloom
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             var cameraData = renderingData.cameraData;
+            EnsureGroups();
+            var groups = this.groups;
+            var grading = ColorGrading;
+            bool enableBloom = this.enableBloom;
+            if (settingsSource == BloomSettingsSource.SceneVolumes)
+            {
+                // URP evaluates the camera's Volume mask/trigger even with Post Processing off.
+                var volume = VolumeManager.instance.stack?.GetComponent<LayerBloomVolume>();
+                if (volume == null || !volume.active) return;
+                volume.CopyTo(volumeGroups, volumeGrading);
+                groups = volumeGroups;
+                grading = volumeGrading;
+                enableBloom = volume.enableBloom.value;
+            }
 #if UNITY_EDITOR
             if (EditorCameraSetupEvaluated != null)
             {
                 bool hasOutput = false;
                 if (enableBloom && !showFullscreen && maskMaterial != null && cameraData.renderType == CameraRenderType.Base &&
                     (cameraData.cameraType == CameraType.Game || cameraData.cameraType == CameraType.SceneView))
-                    foreach (var group in Groups)
+                    foreach (var group in groups)
                         hasOutput |= group.enabled && (uint)group.renderingLayers != 0 && group.intensity > 0 &&
                             group.clamp > 0 && (group.tint.r > 0 || group.tint.g > 0 || group.tint.b > 0);
                 var unityBloom = VolumeManager.instance.stack?.GetComponent<Bloom>();
@@ -227,7 +249,7 @@ namespace LayerAwareBloom
             if (maskMaterial == null || cameraData.renderType != CameraRenderType.Base ||
                 (cameraData.cameraType != CameraType.Game && cameraData.cameraType != CameraType.SceneView))
                 return;
-            if (!enableBloom && !showFullscreen && !ColorGrading.enabled)
+            if (!enableBloom && !showFullscreen && !grading.enabled)
                 return;
 
             EnsureGroups();
@@ -300,9 +322,9 @@ namespace LayerAwareBloom
                 fullscreenPreviewPass.Setup(maskMaterial, !enableBloom, selectedPreview);
                 renderer.EnqueuePass(fullscreenPreviewPass);
             }
-            else if (anyGroup || ColorGrading.enabled)
+            else if (anyGroup || grading.enabled)
             {
-                bloomCompositePass.Setup(maskMaterial, false, -1, ColorGrading);
+                bloomCompositePass.Setup(maskMaterial, false, -1, grading);
                 renderer.EnqueuePass(bloomCompositePass);
             }
         }
