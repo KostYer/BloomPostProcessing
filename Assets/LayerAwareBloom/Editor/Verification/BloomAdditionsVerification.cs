@@ -27,7 +27,6 @@ namespace LayerAwareBloom.Editor
             Run();
         }
 
-        [MenuItem("Tools/Layer Aware Bloom/Verify Optional Additions")]
         public static void Run()
         {
             File.WriteAllText(Report, "Optional bloom additions: GPU and serialization checks\n");

@@ -43,7 +43,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4385e85448954c3a8180ff3c9203ae04, type: 3}
   m_Name: LayerBloomVolume
   m_EditorClassIdentifier: LayerAwareBloom.Runtime::LayerAwareBloom.LayerBloomVolume
-  active: 0
+  active: 1
   enableBloom:
     m_OverrideState: 1
     m_Value: 1
@@ -55,13 +55,13 @@ MonoBehaviour:
       m_OverrideState: 1
       m_Value:
         serializedVersion: 0
-        m_Bits: 0
+        m_Bits: 2
     threshold:
       m_OverrideState: 1
-      m_Value: 0.9
+      m_Value: 1
     intensity:
       m_OverrideState: 1
-      m_Value: 0
+      m_Value: 5.2
     tint:
       m_OverrideState: 1
       m_Value: {r: 1, g: 1, b: 1, a: 1}
@@ -70,7 +70,7 @@ MonoBehaviour:
       m_Value: 65472
     scatter:
       m_OverrideState: 1
-      m_Value: 0.7
+      m_Value: 0.681
     maxIterations:
       m_OverrideState: 1
       m_Value: 6
@@ -81,13 +81,13 @@ MonoBehaviour:
       m_OverrideState: 1
       m_Value: 0
     softKnee:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0.5
     radius:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 1
     stopNaN:
-      m_OverrideState: 1
+      m_OverrideState: 0
       m_Value: 0
   group2:
     enabled:
@@ -97,7 +97,7 @@ MonoBehaviour:
       m_OverrideState: 1
       m_Value:
         serializedVersion: 0
-        m_Bits: 4
+        m_Bits: 2
     threshold:
       m_OverrideState: 1
       m_Value: 1
@@ -301,7 +301,7 @@ MonoBehaviour:
       m_Value: 0
   enableColorGrading:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 1
   exposure:
     m_OverrideState: 1
     m_Value: 0

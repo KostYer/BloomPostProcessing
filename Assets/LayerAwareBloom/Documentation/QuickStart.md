@@ -48,4 +48,4 @@ When a rendered camera has both Unity's Volume Bloom and this feature active, an
 | Lights stop affecting an object | Restore its original lighting Rendering Layers as well as the bloom selection layer. |
 | Glow differs in a build | Confirm all feature shader references are serialized and check the Console/player log for missing shader variants. |
 
-For diagnostics run **Tools > Layer Aware Bloom > Verify Optional Additions** and **Verify Double Bloom Warning**. They use the active URP asset's default renderer and require an enabled Rendering Layer Bloom feature. The optional imported-fire check runs only if that development asset is present.
+For diagnostics run **Tools > Layer Aware Bloom > Validate Setup**. This runs all validation groups and reports specific failures in the Console. The checks use the active URP asset's default renderer and require an enabled Rendering Layer Bloom feature. The optional imported-fire check runs only if that development asset is present.

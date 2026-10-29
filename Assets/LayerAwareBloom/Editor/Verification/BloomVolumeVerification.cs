@@ -24,7 +24,7 @@ namespace LayerAwareBloom.Editor
             if (EditorApplication.isCompiling || EditorApplication.isUpdating) { EditorApplication.delayCall += Requested; return; }
             File.Delete(Marker); Run();
         }
-        [MenuItem("Tools/Layer Aware Bloom/Verify Scene Volumes")]
+
         public static void Run()
         {
             var feature = BloomVerificationContext.FindFeature();

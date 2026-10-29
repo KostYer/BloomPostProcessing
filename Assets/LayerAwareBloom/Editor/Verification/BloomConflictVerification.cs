@@ -13,7 +13,7 @@ namespace LayerAwareBloom.Editor
     public static class BloomConflictVerification
     {
         const string Report = "Temp/BloomConflictVerification.txt";
-        [MenuItem("Tools/Layer Aware Bloom/Verify Double Bloom Warning")]
+
         public static void Run()
         {
             var feature = BloomVerificationContext.FindFeature();

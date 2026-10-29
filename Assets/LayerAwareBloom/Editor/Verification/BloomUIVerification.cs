@@ -42,7 +42,6 @@ namespace LayerAwareBloom.Editor
             EditorApplication.Exit(passed ? 0 : 1);
         }
 
-        [MenuItem("Tools/Layer Aware Bloom/Verify UI Sources")]
         public static void Run()
         {
             var feature = BloomVerificationContext.FindFeature();

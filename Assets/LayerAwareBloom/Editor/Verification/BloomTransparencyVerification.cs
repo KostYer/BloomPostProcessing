@@ -29,7 +29,6 @@ namespace LayerAwareBloom.Editor
             Run();
         }
 
-        [MenuItem("Tools/Layer Aware Bloom/Verify Transparent Sources")]
         public static void Run()
         {
             var feature = BloomVerificationContext.FindFeature();

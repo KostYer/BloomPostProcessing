@@ -47,7 +47,7 @@ Use **Create Scene Volume from Existing Renderer Settings** on the bloom feature
 
 A Global Volume is a scene object, not an automatic scene boundary: additively loaded scenes can contribute to the same camera, just like Unity post-processing. Use unique profiles for independent scene settings, and the camera's **Volume Layer Mask** to separate cameras/loaded scenes. This is the GameObject layer of the Volume, separate from the Rendering Layers selecting glowing objects. Via Scripting Volume update mode requires the normal camera Volume-stack update API. Custom SingleCameraRequest callers must evaluate the intended stack themselves; StandardRequest runs URP's normal per-camera evaluation.
 
-**Tools / Layer Aware Bloom / Verify Scene Volumes** checks settings isolation, numeric blending, override checkboxes, local/global Volumes, disabling/unloading, standalone tonemapping, grading, and scene-instance demo cycling. The current DX12/Linear fixture passes 23 checks when the development sample is installed. The transparent/VFX regression also passes with explicit legacy test settings. Reports are written under ignored `Temp/`; the fixture restores renderer state and removes its temporary scenes.
+**Tools / Layer Aware Bloom / Validate Setup** checks settings isolation, numeric blending, override checkboxes, local/global Volumes, disabling/unloading, standalone tonemapping, grading, and scene-instance demo cycling. The current DX12/Linear fixture passes 23 checks when the development sample is installed. The transparent/VFX regression also passes with explicit legacy test settings. Reports are written under ignored `Temp/`; the fixture restores renderer state and removes its temporary scenes.
 
 The package runs in this order regardless of the order of these two features in the inspector:
 
@@ -91,13 +91,13 @@ The native Canvas draw uses an internal material wrapper that reuses Unity's **U
 
 UI capture adds Canvas material/batch updates, CPU geometry/property collection once per camera, extra UI draws for each active group, and mask push/pop draws for each masked element. Keep large UI hierarchies and many active bloom groups in mind when profiling. The serialized **UI Bloom Shader** and **UI Native Shader** references on the renderer feature keep both shaders included in builds.
 
-Run **Tools > Layer Aware Bloom > Verify UI Sources** for the UI render regression. It uses a temporary preview scene, restores settings, and writes reports/images under `Temp/`.
+Run **Tools > Layer Aware Bloom > Validate Setup** for the UI render regression. It uses a temporary preview scene, restores settings, and writes reports/images under `Temp/`.
 
 Transparent particles and meshes are drawn into each group's HDR source using their original materials, back-to-front, with camera depth testing and depth writes disabled. Texture alpha, additive blending, vertex animation, and emission are preserved. Assign the group's Rendering Layer to every relevant child Particle System Renderer or Mesh Renderer; assigning it only to an empty VFX parent does not select the visible children. Soft particles and distortion have access to URP's depth and opaque-color textures.
 
 Opaque selection is captured before normal transparency rendering, so unselected particles cannot contaminate selected opaque colors. Only selected transparent renderers participate in the source's transparency blending; unselected transparent foregrounds do not attenuate bloom, and refractive shaders can include background color from the camera opaque texture. Opaque objects still occlude transparent sources. Each active group adds a transparent renderer-list draw in addition to its existing mask and blur passes.
 
-Run **Tools > Layer Aware Bloom > Verify Transparent Sources** to check HDR particles, alpha, additive blending, layer exclusion, opaque occlusion, bloom spread, and the imported fire prefab when present. The check discovers the active URP asset's default renderer, uses a temporary preview scene, restores feature settings, and writes its report and captures under `Temp/`.
+Run **Tools > Layer Aware Bloom > Validate Setup** to check HDR particles, alpha, additive blending, layer exclusion, opaque occlusion, bloom spread, and the imported fire prefab when present. The check discovers the active URP asset's default renderer, uses a temporary preview scene, restores feature settings, and writes its report and captures under `Temp/`.
 
 Tonemapping has its own Volume override, material, shader, and Render Graph pass. It uses SRP Core's Volume framework and color math, without Unity's built-in Bloom/Tonemapping overrides, post-processing passes, or grading LUT. The shader reference remains serialized in the renderer feature for builds.
 

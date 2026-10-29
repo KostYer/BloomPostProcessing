@@ -36,7 +36,7 @@ namespace LayerAwareBloom.Editor
             if (!States.TryGetValue(key, out var state))
                 States[key] = state = new State { feature = feature, camera = camera };
             if (conflict && !state.conflict)
-                Debug.LogWarning($"Layer Aware Bloom — {camera.name}: {ConflictMessage}", camera);
+                Debug.LogWarning($"[Layer Aware Bloom] Type: Double bloom, warning: {ConflictMessage} Camera: {camera.name}.", camera);
             state.conflict = conflict; state.missingHdr = missingHdr;
             state.time = EditorApplication.timeSinceStartup;
         }
