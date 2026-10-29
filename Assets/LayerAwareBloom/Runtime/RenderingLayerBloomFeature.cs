@@ -380,6 +380,15 @@ namespace LayerAwareBloom
                 new ShaderTagId("UniversalGBuffer")
             };
 
+            // Transparent sources need final shaded RGB. A matching G-buffer pass can
+            // overwrite the forward result with albedo (and omit HDR emission).
+            private static readonly List<ShaderTagId> TransparentShaderTags = new()
+            {
+                new ShaderTagId("UniversalForward"),
+                new ShaderTagId("UniversalForwardOnly"),
+                new ShaderTagId("SRPDefaultUnlit")
+            };
+
             private const int MaxPyramidLevels = 8;
             // Shader passes 0/1 draw the mask and preview. These four contain the URP Gaussian filters in RenderingLayerBloom.shader.
             private const int Prefilter = 2, BlurHorizontal = 3, BlurVertical = 4, Upsample = 5;
@@ -552,7 +561,7 @@ namespace LayerAwareBloom
                 // Retain each material's vertex animation, texture alpha, HDR emission and blend mode.
                 // An override silhouette would turn particle billboards into solid glowing rectangles.
                 var drawing = RenderingUtils.CreateDrawingSettings(
-                    ShaderTags, rendering, camera, lights, SortingCriteria.CommonTransparent);
+                    TransparentShaderTags, rendering, camera, lights, SortingCriteria.CommonTransparent);
                 var filtering = new FilteringSettings(RenderQueueRange.transparent, -1, renderingLayerMask);
                 // These Temp arrays stay alive until Render Graph creates the native renderer list.
                 var tags = new NativeArray<ShaderTagId>(2, Allocator.Temp);

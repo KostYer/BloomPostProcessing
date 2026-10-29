@@ -155,6 +155,7 @@ namespace LayerAwareBloom.Editor
                 particlesObject.SetActive(false);
                 blocker.SetActive(false);
                 VerifyLitTransparency(feature, camera, rt, scene, opaqueMaterial);
+                VerifyTransparentEmission(feature, camera, rt, scene);
 
                 const string prefabPath = "Assets/ThirdParty/VFX/Free Fire VFX URP/Particles/VFX_Fire_Floor_01.prefab";
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
@@ -326,6 +327,55 @@ namespace LayerAwareBloom.Editor
                 UnityEngine.Object.DestroyImmediate(sphere);
                 UnityEngine.Object.DestroyImmediate(overlap);
                 UnityEngine.Object.DestroyImmediate(lightObject);
+                UnityEngine.Object.DestroyImmediate(material);
+            }
+        }
+
+        static void VerifyTransparentEmission(RenderingLayerBloomFeature feature, Camera camera,
+            RenderTexture rt, Scene scene)
+        {
+            var second = feature.Groups[1];
+            string savedSecond = JsonUtility.ToJson(second);
+            var material = new Material(Shader.Find("Universal Render Pipeline/Simple Lit"));
+            var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            SceneManager.MoveGameObjectToScene(quad, scene);
+            try
+            {
+                JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(feature.Groups[0]), second);
+                second.enabled = true; second.renderingLayers = 4;
+                quad.GetComponent<Renderer>().sharedMaterial = material;
+                quad.GetComponent<Renderer>().renderingLayerMask = 4;
+                material.SetColor("_EmissionColor", new Color(5.3403134f, 1.3979878f, 0, 1));
+                material.EnableKeyword("_EMISSION");
+                material.SetFloat("_Surface", 1);
+                material.SetFloat("_SrcBlend", (float)BlendMode.One);
+                material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+                material.SetFloat("_ZWrite", 0);
+                material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                material.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+                material.renderQueue = (int)RenderQueue.Transparent;
+                foreach (float alpha in new[] { 1f, .25f })
+                {
+                    material.SetColor("_BaseColor", new Color(1, 1, 1, alpha));
+                    SetBloom(feature, false);
+                    feature.ShowFullscreen = false;
+                    var cameraPixels = Capture(camera, rt);
+                    feature.ShowFullscreen = true; feature.PreviewGroup = 1;
+                    var sourcePixels = Capture(camera, rt);
+                    int center = Size / 2 * Size + Size / 2;
+                    File.AppendAllText(Report, $"Simple Lit alpha={alpha}: camera={cameraPixels[center]}, source={sourcePixels[center]}\n");
+                    float difference = cameraPixels.Zip(sourcePixels, (a,b) => Mathf.Max(
+                        Mathf.Abs(a.r-b.r), Mathf.Abs(a.g-b.g), Mathf.Abs(a.b-b.b))).Max();
+                    Require(difference < .08f, $"Transparent Simple Lit emission matches camera HDR RGB, alpha={alpha}, difference={difference}");
+                    Require(sourcePixels[center].r > 3 && sourcePixels[center].r > sourcePixels[center].g * 2,
+                        "Transparent Simple Lit source preserves bright orange emission");
+                }
+            }
+            finally
+            {
+                JsonUtility.FromJsonOverwrite(savedSecond, second);
+                feature.PreviewGroup = 0; feature.ShowFullscreen = true; SetBloom(feature, false);
+                UnityEngine.Object.DestroyImmediate(quad);
                 UnityEngine.Object.DestroyImmediate(material);
             }
         }

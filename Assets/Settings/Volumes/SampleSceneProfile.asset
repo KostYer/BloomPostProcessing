@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: LayerBloomVolume
   m_EditorClassIdentifier: LayerAwareBloom.Runtime::LayerAwareBloom.LayerBloomVolume
   active: 0
+  tonemappingSetupComplete: 1
   enableBloom:
     m_OverrideState: 1
     m_Value: 1
