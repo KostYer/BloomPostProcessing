@@ -1,15 +1,22 @@
 {
   "package": "LayerAwareBloom-1.0.0-rc2.unitypackage",
-  "bytes": 84318,
-  "exported_files": 44,
-  "sha256": "9dc08ff4825083c01ba0e05d38c3ff05f1c68b3da7c74825bfab45219eade6a1",
+  "created_utc": "2026-10-30T13:06:14.925551+00:00",
+  "bytes": 142310,
+  "exported_files": 50,
+  "exported_folders": 0,
+  "sha256": "5071327937d18492137d3e0856127dfa516dd8976016aa914dcdf05eee329ee5",
+  "package_dependencies": {
+    "com.unity.render-pipelines.universal": "17.3.0",
+    "com.unity.ugui": "2.0.0"
+  },
   "checks": [
-    "Archive readable",
-    "All exported assets match current source",
-    "Unity tonemapping setup included",
-    "Custom tonemapping removed",
-    "Development scenes/art and project settings excluded",
-    "Temporary export trigger excluded"
+    "Archive readable; unique entries and complete payloads",
+    "Every exported asset and metadata file matches current source",
+    "Exported asset GUIDs preserved",
+    "Export matches explicit release allowlist",
+    "Native Package Manager dependency metadata includes only URP and uGUI",
+    "Performance documentation and dependency exporter included",
+    "Development scenes/art and project settings excluded"
   ],
-  "validation_note": "27 Unity integration checks passed before export; no new clean-project import or player build performed for rc2."
+  "validation_note": "Exported through Unity release menu. Archive/content validation passed; no new clean-project import or player build performed for this export."
 }
