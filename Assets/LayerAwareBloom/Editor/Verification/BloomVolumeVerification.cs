@@ -32,7 +32,7 @@ namespace LayerAwareBloom.Editor
             bool featureDirty = EditorUtility.IsDirty(feature);
             var previousScene = SceneManager.GetActiveScene(); var previousRT = RenderTexture.active;
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
-            string temporaryScenePath = "Assets/LayerAwareBloom/Editor/Verification/VolumeCheck-"+Guid.NewGuid().ToString("N")+".unity";
+            string temporaryScenePath = "Assets/LayerAwareBloom/Samples/Scenes/VolumeCheck-"+Guid.NewGuid().ToString("N")+".unity";
             var allocations = new List<Object>(); var errors = new List<string>(); int count = 0;
             Application.LogCallback onLog = (m,s,t) => { if(t==LogType.Error || t==LogType.Exception || t==LogType.Assert) errors.Add(m); };
             Application.logMessageReceived += onLog;

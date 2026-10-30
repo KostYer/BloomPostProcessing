@@ -31,6 +31,10 @@ namespace LayerAwareBloom.Editor
             }
             scenePath ??= scene.path;
             string directory = string.IsNullOrEmpty(scenePath) ? "Assets" : System.IO.Path.GetDirectoryName(scenePath).Replace('\\', '/');
+            if (System.IO.Path.GetFileName(directory) == "Scenes")
+                directory = System.IO.Path.GetDirectoryName(directory).Replace('\\', '/');
+            directory += "/Settings/Volumes";
+            EnsureAssetFolder(directory);
             string sceneName = string.IsNullOrEmpty(scenePath) ? "Scene" : System.IO.Path.GetFileNameWithoutExtension(scenePath);
             string path = AssetDatabase.GenerateUniqueAssetPath($"{directory}/{sceneName}_LayerAwareBloom.asset");
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
@@ -55,6 +59,14 @@ namespace LayerAwareBloom.Editor
             Selection.activeGameObject = go;
             SceneView.RepaintAll();
             return volume;
+        }
+
+        internal static void EnsureAssetFolder(string path)
+        {
+            if (AssetDatabase.IsValidFolder(path)) return;
+            string parent = System.IO.Path.GetDirectoryName(path).Replace('\\', '/');
+            EnsureAssetFolder(parent);
+            AssetDatabase.CreateFolder(parent, System.IO.Path.GetFileName(path));
         }
     }
 }

@@ -13,19 +13,26 @@ namespace LayerAwareBloom.Editor
 {
     public static class BloomReleaseTools
     {
-        public const string DemoRoot = "Assets/LayerAwareBloom/Samples/GettingStarted";
-        public const string ScenePath = DemoRoot + "/GettingStarted.unity";
-        public const string PipelinePath = DemoRoot + "/DemoPipeline.asset";
+        public const string SamplesRoot = "Assets/LayerAwareBloom/Samples";
+        public const string ScenePath = SamplesRoot + "/Scenes/GettingStarted.unity";
+        public const string RenderingRoot = SamplesRoot + "/Settings/Rendering/GettingStarted";
+        public const string MaterialsRoot = SamplesRoot + "/Materials/GettingStarted";
+        public const string ScriptsRoot = SamplesRoot + "/Scripts/GettingStarted";
+        public const string PipelinePath = RenderingRoot + "/DemoPipeline.asset";
+        public const string VolumePath = SamplesRoot + "/Settings/Volumes/GettingStarted_LayerAwareBloom.asset";
         static readonly string[] ExportRoots = {
             "Assets/LayerAwareBloom/Runtime", "Assets/LayerAwareBloom/Shaders", "Assets/LayerAwareBloom/Editor",
             "Assets/LayerAwareBloom/Documentation", "Assets/LayerAwareBloom/README.md", "Assets/LayerAwareBloom/CHANGELOG.md",
-            "Assets/LayerAwareBloom/Third-Party Notices.txt", DemoRoot
+            "Assets/LayerAwareBloom/Third-Party Notices.txt", ScenePath, RenderingRoot, MaterialsRoot, ScriptsRoot, VolumePath,
+            SamplesRoot + "/Materials/Sky/ProceduralSky.mat"
         };
 
         [MenuItem("Tools/Layer Aware Bloom/Release/Create Getting Started Demo")]
         public static void CreateDemo()
         {
             if (File.Exists(ScenePath)) return;
+            foreach (string directory in new[] { SamplesRoot + "/Scenes", RenderingRoot, MaterialsRoot })
+                BloomSceneVolumeSetup.EnsureAssetFolder(directory);
             var previous = SceneManager.GetActiveScene();
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
             try
@@ -35,7 +42,7 @@ namespace LayerAwareBloom.Editor
                 renderer.name = "DemoRenderer";
                 renderer.postProcessData = AssetDatabase.LoadAssetAtPath<PostProcessData>(
                     "Packages/com.unity.render-pipelines.universal/Runtime/Data/PostProcessData.asset");
-                AssetDatabase.CreateAsset(renderer, DemoRoot + "/DemoRenderer.asset");
+                AssetDatabase.CreateAsset(renderer, RenderingRoot + "/DemoRenderer.asset");
                 var bloom = ScriptableObject.CreateInstance<RenderingLayerBloomFeature>();
                 bloom.name = "Rendering Layer Bloom";
                 AssetDatabase.AddObjectToAsset(bloom, renderer); renderer.rendererFeatures.Add(bloom); bloom.Create();
@@ -69,7 +76,7 @@ namespace LayerAwareBloom.Editor
                     var material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
                     material.name = new[] { "CyanSource", "AmberSource", "UnselectedSource" }[i];
                     material.SetColor("_BaseColor", new[] { new Color(0, 4, 6), new Color(6, 2, 0), new Color(3, 3, 3) }[i]);
-                    AssetDatabase.CreateAsset(material, DemoRoot + "/" + material.name + ".mat");
+                    AssetDatabase.CreateAsset(material, MaterialsRoot + "/" + material.name + ".mat");
                     var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     cube.name = new[] { "Group 1 - Wide Cyan Bloom", "Group 2 - Tight Amber Bloom", "Unselected - No Bloom" }[i];
                     cube.transform.position = new Vector3((i - 1) * 2, 0, 0);
@@ -77,7 +84,7 @@ namespace LayerAwareBloom.Editor
                     cube.GetComponent<Renderer>().renderingLayerMask = new uint[] { 2, 4, 1 }[i];
                 }
                 // Resolve by MonoScript to keep the editor assembly independent of optional sample assemblies.
-                var script = AssetDatabase.LoadAssetAtPath<MonoScript>(DemoRoot + "/BloomPlayerSmokeCheck.cs");
+                var script = AssetDatabase.LoadAssetAtPath<MonoScript>(ScriptsRoot + "/BloomPlayerSmokeCheck.cs");
                 var smoke = camera.gameObject.AddComponent(script.GetClass());
                 var smokeState = new SerializedObject(smoke);
                 smokeState.FindProperty("feature").objectReferenceValue = bloom;

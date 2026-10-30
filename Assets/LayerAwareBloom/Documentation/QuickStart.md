@@ -24,7 +24,7 @@ Expand **Optional Additions** to expose Soft Knee, Radius, and Stop NaN / Infini
 
 ## Getting Started sample
 
-Open `Samples/GettingStarted/GettingStarted.unity`. Assign its `DemoPipeline.asset` in a disposable project's Graphics settings and clear or replace any Quality pipeline override. The cyan and amber cubes use separate bloom groups; the white cube is unselected. The sample uses Unity primitives and URP Unlit materials and needs no imported artwork, font, model, or VFX pack. Its smoke-check component is inert unless explicitly launched with the release-test command-line flag.
+Open `Samples/Scenes/GettingStarted.unity`. Assign `Samples/Settings/Rendering/GettingStarted/DemoPipeline.asset` in a disposable project's Graphics settings and clear or replace any Quality pipeline override. The cyan and amber cubes use separate bloom groups; the white cube is unselected. Its materials, scripts, and Volume Profile are under `Samples/Materials/GettingStarted/`, `Samples/Scripts/GettingStarted/`, and `Samples/Settings/Volumes/`, respectively. The sample uses Unity primitives and URP Unlit materials and needs no imported artwork, font, model, or VFX pack. Its smoke-check component is inert unless explicitly launched with the release-test command-line flag.
 
 ## UI
 

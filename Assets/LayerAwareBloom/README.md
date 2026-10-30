@@ -2,7 +2,7 @@
 
 Start with [Quick Start](Documentation/QuickStart.md), [Compatibility](Documentation/Compatibility.md), and [Release Preparation](Documentation/ReleasePreparation.md). Changes are listed in [CHANGELOG](CHANGELOG.md).
 
-The release candidate includes the primitive-based `Samples/GettingStarted` demo. The broader sample scenes/art described in the project layout below belong to the development project and are excluded from the explicit release export.
+The release candidate includes the primitive-based `Samples/Scenes/GettingStarted.unity` demo and its dedicated materials, scripts, and settings. The broader sample scenes/art described in the project layout below belong to the development project and are excluded from the explicit release export.
 
 **Rendering Layer Bloom** is a URP renderer feature that selects opaque surfaces and transparent renderers by Rendering Layer, builds up to six independent bloom groups, and optionally grades the combined image.
 
@@ -21,14 +21,22 @@ LayerAwareBloom/
   Editor/Inspectors/       Custom inspectors and authoring tools
   Editor/Verification/     Explicitly invoked rendering checks
   Samples/
-    Scenes/                BloomGroups and BloomSources demos
+    Scenes/                GettingStarted, BloomGroups, and BloomSources demos
+      Recovery/            Recovered scene snapshots
     Scripts/               Demo movement, labels, and bloom cycling
+      GettingStarted/      Smoke-check script and its assembly definition
     Materials/             Named demo materials, GlowingCubes, and Sky
+      GettingStarted/      Primitive demo source materials
+    Settings/
+      Rendering/GettingStarted/  Demo renderer and pipeline
+      Volumes/             Scene Volume Profiles
     Shaders/               EmissionOnly demo shader
     Models/, Sprites/, Fonts/
 ```
 
-Project-wide pipeline assets are in `Assets/Settings/Rendering/` (DesktopRenderer, DesktopPipeline, MobileRenderer, MobilePipeline). Volume profiles and input actions are under `Assets/Settings/Volumes/` and `Assets/Settings/Input/`. The imported fire effects are in `Assets/ThirdParty/VFX/`. Unity's TextMesh Pro and tutorial folders retain their standard layouts.
+Project-wide pipeline assets are in `Assets/Settings/Rendering/` (DesktopRenderer, DesktopPipeline, MobileRenderer, MobilePipeline). Volume profiles and input actions are under `Assets/Settings/Volumes/` and `Assets/Settings/Input/`. The imported fire effects are in `Assets/ThirdParty/VFX/`. TextMesh Pro's standalone material presets are in `Assets/TextMesh Pro/Resources/Materials/`; its font assets keep their standard Resources paths.
+
+Keep each folder's assets grouped by purpose: materials in Materials, scenes in Scenes, scripts and assembly definitions together, and Volume Profiles and pipeline assets in Settings. New scene Volume Profiles are created under the scene collection's `Settings/Volumes/`, outside the Scenes folder.
 
 ## Standalone setup
 
