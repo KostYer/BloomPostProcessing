@@ -14,9 +14,11 @@ Selective bloom for Unity 6 URP, with up to six independently controlled Renderi
 
 ## Requirements and limitations
 
-Unity 6000.3.14f1, URP 17.3.0, uGUI 2.0.0, Universal Renderer with Render Graph, Linear color space and HDR. Initial target: Windows/DX12, base cameras, SDR output. No claim of mobile, XR, HDRP, Built-in pipeline, camera stacking, compatibility mode, dynamic resolution or MSAA support. Overlay UI, TMP/SDF selection, UI Toolkit, custom UI capture and opaque vertex-deformed masks are unsupported. See Compatibility.md for transparent/UI ordering limitations.
+Requires URP's Universal Renderer with Render Graph, Linear color space, HDR rendering, base cameras, and SDR display output. The reference project uses Unity 6000.3.14f1, URP 17.3.0, and uGUI 2.0.0. Built-in, HDRP, and the compatibility renderer path are not implemented. Overlay UI, TMP/SDF selection, UI Toolkit, custom UI capture and opaque vertex-deformed masks are unsupported. See Compatibility.md for transparent/UI ordering limitations.
 
-Performance profiling is pending. Do not add frame-rate or GPU-time claims yet.
+Adjust group counts, bloom resolution, iterations, and filtering quality to balance visual quality and cost for desktop and mobile projects. See Documentation/Performance.md for recommended settings.
+
+**XR/VR:** currently unvalidated, as are MSAA, dynamic resolution, and camera stacking. Treat these as validation work before choosing quality settings.
 
 ## Third-party notice
 

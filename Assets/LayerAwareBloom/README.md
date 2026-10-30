@@ -1,6 +1,6 @@
 # Layer Aware Bloom
 
-Start with [Quick Start](Documentation/QuickStart.md), [Compatibility](Documentation/Compatibility.md), and [Release Preparation](Documentation/ReleasePreparation.md). Changes are listed in [CHANGELOG](CHANGELOG.md).
+Start with [Quick Start](Documentation/QuickStart.md), [Performance and Quality](Documentation/Performance.md), [Compatibility](Documentation/Compatibility.md), and [Release Preparation](Documentation/ReleasePreparation.md). Changes are listed in [CHANGELOG](CHANGELOG.md).
 
 The release candidate includes the primitive-based `Samples/Scenes/GettingStarted.unity` demo and its dedicated materials, scripts, and settings. The broader sample scenes/art described in the project layout below belong to the development project and are excluded from the explicit release export.
 
@@ -108,4 +108,4 @@ Run **Tools > Layer Aware Bloom > Validate Setup** to check HDR particles, alpha
 
 Tonemapping uses Unity's standard Volume override and post-processing path. There is no custom tonemapping renderer feature, shader, or pass. Use HDR color grading on the URP asset and enable camera Post Processing. Unity Bloom is a separate override; leave its intensity at zero if only selective bloom is intended. Pipeline default Volume Profiles can also enable Unity Bloom, even with no scene Volume object.
 
-Currently verified: Unity 6000.3.14f1, URP 17.3, Render Graph, DX12, Linear color space, base Game/Scene View cameras, SDR output. Gamma, camera stacking, XR, MSAA, dynamic resolution, HDR-display output, and the compatibility renderer path are not yet validated. Opaque selection supports ordinary meshes; transparent selection uses the original forward material passes.
+Requires URP's Universal Renderer with Render Graph, Linear color space, HDR rendering, base Game/Scene View cameras, and SDR display output. The reference project uses Unity 6000.3.14f1 and URP 17.3. Opaque selection supports ordinary meshes; transparent selection uses the original forward material passes. See [Performance and Quality](Documentation/Performance.md) for desktop and mobile settings, and [Compatibility](Documentation/Compatibility.md) for rendering requirements and XR/VR considerations.

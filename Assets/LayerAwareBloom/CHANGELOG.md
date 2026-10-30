@@ -14,4 +14,4 @@
 - Separate runtime/editor/sample assemblies and portable verification tools.
 - Explicit release export with a primitive-based Getting Started demo and offline documentation.
 
-Release candidate only. Profiling and publisher submission review remain outstanding.
+Release candidate. Publisher submission review remains outstanding.

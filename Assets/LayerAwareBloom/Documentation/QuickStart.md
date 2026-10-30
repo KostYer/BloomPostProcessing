@@ -2,7 +2,7 @@
 
 ## Requirements
 
-Use Unity 6000.3.14f1 with URP 17.3.0, the Universal Renderer, Render Graph, Linear color space, HDR enabled, and SDR display output. The initial validation target is Windows/DX12. Install URP and uGUI through Unity Package Manager before importing the package. Unity Collections and SRP Core are URP dependencies. The package does not install or modify dependencies automatically.
+Use the Universal Renderer with Render Graph, Linear color space, HDR enabled, and SDR display output. The reference project uses Unity 6000.3.14f1, URP 17.3.0, and uGUI 2.0.0. Install URP and uGUI through Unity Package Manager before importing the package. Unity Collections and SRP Core are URP dependencies. The package does not install or modify dependencies automatically.
 
 ## Add selective bloom to your project
 
@@ -17,6 +17,8 @@ Use Unity 6000.3.14f1 with URP 17.3.0, the Universal Renderer, Render Graph, Lin
 Use a separate profile in each scene. Without an active matching Volume, these effects are off. For an existing setup, the renderer feature's **Create Scene Volume from Existing Renderer Settings** button copies its six groups and grading into a scene profile and adds Unity Tonemapping. Save the scene afterward. Camera Volume Layer Mask, Volume weight, priority, and local colliders work normally. Bloom works with camera Post Processing off; Unity Tonemapping requires it on. Additively loaded Global Volumes can affect the same camera unless separated by its Volume Layer Mask.
 
 Groups own sources in inspector order: the first matching active group wins. Disabled or zero-output groups do not claim objects. Later groups can independently control other sources.
+
+See [Performance and Quality](Performance.md) for lower-cost and higher-quality starting settings, group and sampling tradeoffs, and platform considerations.
 
 ## Optional additions and reset
 

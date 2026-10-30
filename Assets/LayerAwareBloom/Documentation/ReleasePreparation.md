@@ -8,9 +8,9 @@ Before publication:
 
 1. Import the exported candidate into a fresh project with the stated dependencies; run the sample and editor verification.
 2. Build and run a Windows standalone player to check shader inclusion and runtime behavior. Keep the reports with the exact candidate used.
-3. Profile representative scenes with one, three and six groups, UI, and overlapping selections. This step is deliberately not part of the current release-preparation run.
-4. Review the support matrix, third-party notices and any applicable submission licensing requirements. Include the Unity-derived shader disclosure in the listing.
-5. Fill publisher identity, support contact, price, and final listing details. Review AI assistance disclosure, screenshots and video before submitting. Do not claim performance or compatibility not measured.
+3. Choose sample quality settings using [Performance and Quality](Performance.md), including appropriate group counts, downscale, and filtering quality.
+4. Review the rendering requirements, known limitations, third-party notices and any applicable submission licensing requirements. Include the Unity-derived shader disclosure in the listing.
+5. Fill publisher identity, support contact, price, and final listing details. Review AI assistance disclosure, screenshots and video before submitting.
 6. Run the current Asset Store submission validator and submit through the Publisher Portal only after publisher review.
 
 Suggested AI description: "OpenAI Codex assisted with C# and shader implementation, custom inspectors, verification tooling, documentation and release preparation. The implementation was adapted for Rendering Layer selection, independently controlled bloom groups, transparency and uGUI capture, and tested through editor rendering checks and the recorded build validation. Unity-derived bloom filtering is identified separately in Third-Party Notices."
