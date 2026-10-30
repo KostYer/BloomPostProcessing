@@ -361,7 +361,7 @@ GameObject:
   - component: {fileID: 256950030}
   - component: {fileID: 256950029}
   m_Layer: 0
-  m_Name: FlamingoSpprite
+  m_Name: FlamingoSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
