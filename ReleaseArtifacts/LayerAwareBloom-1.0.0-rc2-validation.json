@@ -1,22 +1,31 @@
 {
   "package": "LayerAwareBloom-1.0.0-rc2.unitypackage",
-  "created_utc": "2026-10-30T13:06:14.925551+00:00",
-  "bytes": 142310,
-  "exported_files": 50,
-  "exported_folders": 0,
-  "sha256": "5071327937d18492137d3e0856127dfa516dd8976016aa914dcdf05eee329ee5",
+  "created_utc": "2026-10-30T13:48:00.272286+00:00",
+  "bytes": 4153787,
+  "exported_files": 138,
+  "scenes": [
+    "Assets/LayerAwareBloom/Samples/Scenes/BloomGroups.unity",
+    "Assets/LayerAwareBloom/Samples/Scenes/BloomSources.unity",
+    "Assets/LayerAwareBloom/Samples/Scenes/GettingStarted.unity"
+  ],
+  "sha256": "5af5fcecfb8db56e72d5b7e084a617d12cfb0ce1453b683585a56f82d7d68ef8",
   "package_dependencies": {
     "com.unity.render-pipelines.universal": "17.3.0",
-    "com.unity.ugui": "2.0.0"
+    "com.unity.ugui": "2.0.0",
+    "com.unity.inputsystem": "1.19.0"
   },
   "checks": [
-    "Archive readable; unique entries and complete payloads",
-    "Every exported asset and metadata file matches current source",
-    "Exported asset GUIDs preserved",
-    "Export matches explicit release allowlist",
-    "Native Package Manager dependency metadata includes only URP and uGUI",
-    "Performance documentation and dependency exporter included",
-    "Development scenes/art and project settings excluded"
+    "Archive readable; every asset and metadata file matches current source",
+    "GettingStarted, BloomGroups, and BloomSources included with dependencies",
+    "Project/template settings excluded; sample pipeline GUIDs are unique",
+    "Fresh native Unity import completed successfully and preserved template assets byte-for-byte",
+    "All three scenes opened with no missing scripts and correct sample renderer setup",
+    "Graphics and Quality use the selected dedicated sample pipeline",
+    "Actual DX12 render: scene Volume changes selected-source output",
+    "Actual DX12 render: unselected HDR cube receives zero selective bloom (maximum pixel difference 0)",
+    "Actual DX12 render: regular Unity Bloom stays zero with Volume weight one and zero",
+    "Actual DX12 render: Volume weight zero disables scene selective bloom",
+    "Native dependency metadata declares URP, uGUI, and sample Input System"
   ],
-  "validation_note": "Exported through Unity release menu. Archive/content validation passed; no new clean-project import or player build performed for this export."
+  "validation_note": "Verified native package import into an isolated copy of the reported template configuration, scene setup for all three samples, and DX12 GPU pixel readback for the GettingStarted exclusion/Volume regression. No new standalone player build was run."
 }

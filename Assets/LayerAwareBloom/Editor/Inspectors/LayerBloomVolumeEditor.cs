@@ -26,6 +26,7 @@ namespace LayerAwareBloom.Editor
 
         public override void OnInspectorGUI()
         {
+            BloomSampleSetup.Draw((LayerBloomVolume)target);
             PropertyField(Unpack(serializedObject.FindProperty("enableBloom")));
             for (int i = 0; i < RenderingLayerBloomFeature.GroupCount; i++)
             {

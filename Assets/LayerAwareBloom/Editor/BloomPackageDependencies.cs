@@ -11,7 +11,8 @@ namespace LayerAwareBloom.Editor
     {
         internal const string Manifest = "{\n  \"dependencies\": {\n" +
             "    \"com.unity.render-pipelines.universal\": \"17.3.0\",\n" +
-            "    \"com.unity.ugui\": \"2.0.0\"\n  }\n}\n";
+            "    \"com.unity.ugui\": \"2.0.0\",\n" +
+            "    \"com.unity.inputsystem\": \"1.19.0\"\n  }\n}\n";
 
         // The input must be a fresh AssetDatabase.ExportPackage export, which
         // contains no Package Manager manifest. Preserve all its entries verbatim.

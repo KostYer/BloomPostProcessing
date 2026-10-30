@@ -23,8 +23,11 @@ namespace LayerAwareBloom.Editor
         static readonly string[] ExportRoots = {
             "Assets/LayerAwareBloom/Runtime", "Assets/LayerAwareBloom/Shaders", "Assets/LayerAwareBloom/Editor",
             "Assets/LayerAwareBloom/Documentation", "Assets/LayerAwareBloom/README.md", "Assets/LayerAwareBloom/CHANGELOG.md",
-            "Assets/LayerAwareBloom/Third-Party Notices.txt", ScenePath, RenderingRoot, MaterialsRoot, ScriptsRoot, VolumePath,
-            SamplesRoot + "/Materials/Sky/ProceduralSky.mat"
+            "Assets/LayerAwareBloom/Third-Party Notices.txt",
+            ScenePath, SamplesRoot + "/Scenes/BloomGroups.unity", SamplesRoot + "/Scenes/BloomSources.unity",
+            SamplesRoot + "/Scripts", SamplesRoot + "/Shaders", SamplesRoot + "/Materials",
+            SamplesRoot + "/Settings", SamplesRoot + "/Models", SamplesRoot + "/Sprites", SamplesRoot + "/Fonts",
+            "Assets/TextMesh Pro"
         };
 
         [MenuItem("Tools/Layer Aware Bloom/Release/Create Getting Started Demo")]
@@ -62,6 +65,7 @@ namespace LayerAwareBloom.Editor
                 pipeline.name = "DemoPipeline"; pipeline.supportsHDR = true; pipeline.msaaSampleCount = 1;
                 pipeline.colorGradingMode = ColorGradingMode.HighDynamicRange;
                 pipeline.supportsCameraDepthTexture = true; pipeline.supportsCameraOpaqueTexture = true;
+                pipeline.volumeProfile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(SamplesRoot + "/Settings/Volumes/SampleDefaults.asset");
                 AssetDatabase.CreateAsset(pipeline, PipelinePath);
                 foreach (var asset in new UnityEngine.Object[] { bloom, renderer, pipeline })
                 { EditorUtility.SetDirty(asset); AssetDatabase.SaveAssetIfDirty(asset); }
@@ -90,7 +94,12 @@ namespace LayerAwareBloom.Editor
                 smokeState.FindProperty("feature").objectReferenceValue = bloom;
                 smokeState.FindProperty("targetCamera").objectReferenceValue = camera;
                 smokeState.ApplyModifiedPropertiesWithoutUndo();
-                BloomSceneVolumeSetup.Create(bloom, ScenePath);
+                var volume = BloomSceneVolumeSetup.Create(bloom, ScenePath);
+                var regularBloom = volume.sharedProfile.Add<Bloom>(true);
+                regularBloom.intensity.Override(0);
+                AssetDatabase.AddObjectToAsset(regularBloom, volume.sharedProfile);
+                EditorUtility.SetDirty(volume.sharedProfile);
+                AssetDatabase.SaveAssetIfDirty(volume.sharedProfile);
                 EditorSceneManager.SaveScene(scene, ScenePath);
             }
             finally
@@ -110,7 +119,13 @@ namespace LayerAwareBloom.Editor
             var paths = ExportRoots.SelectMany(p => Directory.Exists(p)
                 ? Directory.GetFiles(p, "*", SearchOption.AllDirectories).Where(f => !f.EndsWith(".meta")) : new[] { p })
                 .Select(p => p.Replace('\\', '/')).ToArray();
-            // Explicit list, no IncludeDependencies: never bundle existing customer/demo dependencies by accident.
+            // Include the selected samples' asset dependencies (VFX, profiles, etc.)
+            // explicitly, without exporting recovery scenes or the whole project.
+            paths = paths.Concat(AssetDatabase.GetDependencies(paths, true)
+                .Where(p => p.StartsWith("Assets/") && File.Exists(p)))
+                .Distinct().OrderBy(p => p, StringComparer.Ordinal).ToArray();
+            if (paths.Any(p => p.StartsWith("Assets/Settings/")))
+                throw new InvalidOperationException("A sample references project/template settings. Use the dedicated sample settings before exporting.");
             foreach (string dependency in AssetDatabase.GetDependencies(paths, true))
                 if (dependency.StartsWith("Assets/") && !paths.Contains(dependency) && !AssetDatabase.IsValidFolder(dependency))
                     throw new InvalidOperationException("Release depends on an excluded asset: " + dependency);

@@ -7824,7 +7824,7 @@ MonoBehaviour:
   _maxDistance: 4.5
   _orbitCamera: {fileID: 330585545}
   _cameraOrbitSpeed: 10
-  _bloomFeature: {fileID: 7823412291645092100, guid: f288ae1f4751b564a96ac7587541f7a2, type: 2}
+  _bloomFeature: {fileID: 7823412291645092100, guid: e623ac15745642a4bf49cbc545d6bdee, type: 2}
 --- !u!114 &2134893313
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7837,7 +7837,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a62dca2e5ba144ee81926c7e45ffdf63, type: 3}
   m_Name: 
   m_EditorClassIdentifier: LayerAwareBloom.Samples::BloomCycleDemo
-  _bloomFeature: {fileID: 7823412291645092100, guid: f288ae1f4751b564a96ac7587541f7a2, type: 2}
+  _bloomFeature: {fileID: 7823412291645092100, guid: e623ac15745642a4bf49cbc545d6bdee, type: 2}
   _cycleBloom: 1
   _bloomCycleInterval: 3
 --- !u!1 &2200000000

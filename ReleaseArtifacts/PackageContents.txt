@@ -9,6 +9,7 @@ Assets/LayerAwareBloom/Documentation/QuickStart.md
 Assets/LayerAwareBloom/Documentation/ReleasePreparation.md
 Assets/LayerAwareBloom/Editor/BloomPackageDependencies.cs
 Assets/LayerAwareBloom/Editor/BloomReleaseTools.cs
+Assets/LayerAwareBloom/Editor/Inspectors/BloomSampleSetup.cs
 Assets/LayerAwareBloom/Editor/Inspectors/BloomSceneVolumeSetup.cs
 Assets/LayerAwareBloom/Editor/Inspectors/BloomSetupDiagnostics.cs
 Assets/LayerAwareBloom/Editor/Inspectors/BloomTonemappingSetup.cs
@@ -32,19 +33,106 @@ Assets/LayerAwareBloom/Runtime/RenderingLayerAssigner.cs
 Assets/LayerAwareBloom/Runtime/RenderingLayerBloomFeature.cs
 Assets/LayerAwareBloom/Runtime/UIBloomCapture.cs
 Assets/LayerAwareBloom/Runtime/UIBloomSource.cs
+Assets/LayerAwareBloom/Samples/Fonts/ARIAL SDF.asset
 Assets/LayerAwareBloom/Samples/Materials/GettingStarted/AmberSource.mat
 Assets/LayerAwareBloom/Samples/Materials/GettingStarted/CyanSource.mat
 Assets/LayerAwareBloom/Samples/Materials/GettingStarted/TransparentGreenSource.mat
 Assets/LayerAwareBloom/Samples/Materials/GettingStarted/TransparentMagentaSource.mat
 Assets/LayerAwareBloom/Samples/Materials/GettingStarted/UnselectedSource.mat
+Assets/LayerAwareBloom/Samples/Materials/GlowingCubes/AmberEmission.mat
+Assets/LayerAwareBloom/Samples/Materials/GlowingCubes/BlueEmission.mat
+Assets/LayerAwareBloom/Samples/Materials/GlowingCubes/CoralEmission.mat
+Assets/LayerAwareBloom/Samples/Materials/GlowingCubes/GreenEmission.mat
+Assets/LayerAwareBloom/Samples/Materials/GlowingCubes/MagentaEmission.mat
+Assets/LayerAwareBloom/Samples/Materials/GlowingCubes/RedEmission.mat
+Assets/LayerAwareBloom/Samples/Materials/GlowingCubes/VioletEmission.mat
+Assets/LayerAwareBloom/Samples/Materials/GoldEmission.mat
+Assets/LayerAwareBloom/Samples/Materials/GrayLit.mat
+Assets/LayerAwareBloom/Samples/Materials/Ground.mat
 Assets/LayerAwareBloom/Samples/Materials/Sky/ProceduralSky.mat
+Assets/LayerAwareBloom/Samples/Models/WireframeCube.fbx
+Assets/LayerAwareBloom/Samples/Scenes/BloomGroups.unity
+Assets/LayerAwareBloom/Samples/Scenes/BloomSources.unity
+Assets/LayerAwareBloom/Samples/Scenes/BloomSources/Layer Aware Bloom Volume Profile.asset
 Assets/LayerAwareBloom/Samples/Scenes/GettingStarted.unity
+Assets/LayerAwareBloom/Samples/Scripts/BloomCycleDemo.cs
+Assets/LayerAwareBloom/Samples/Scripts/CubeLabelBillboard.cs
 Assets/LayerAwareBloom/Samples/Scripts/GettingStarted/BloomPlayerSmokeCheck.cs
 Assets/LayerAwareBloom/Samples/Scripts/GettingStarted/LayerAwareBloom.GettingStarted.asmdef
+Assets/LayerAwareBloom/Samples/Scripts/LayerAwareBloom.Samples.asmdef
+Assets/LayerAwareBloom/Samples/Scripts/PointLightCube.cs
+Assets/LayerAwareBloom/Samples/Scripts/SceneController.cs
 Assets/LayerAwareBloom/Samples/Settings/Rendering/GettingStarted/DemoPipeline.asset
 Assets/LayerAwareBloom/Samples/Settings/Rendering/GettingStarted/DemoRenderer.asset
+Assets/LayerAwareBloom/Samples/Settings/Rendering/Showcase/ShowcasePipeline.asset
+Assets/LayerAwareBloom/Samples/Settings/Rendering/Showcase/ShowcaseRenderer.asset
+Assets/LayerAwareBloom/Samples/Settings/Volumes/BloomGroups_LayerAwareBloom.asset
 Assets/LayerAwareBloom/Samples/Settings/Volumes/GettingStarted_LayerAwareBloom.asset
+Assets/LayerAwareBloom/Samples/Settings/Volumes/SampleDefaults.asset
+Assets/LayerAwareBloom/Samples/Shaders/EmissionOnly.shader
+Assets/LayerAwareBloom/Samples/Sprites/edge.png
+Assets/LayerAwareBloom/Samples/Sprites/edge40.png
+Assets/LayerAwareBloom/Samples/Sprites/edge8.png
+Assets/LayerAwareBloom/Samples/Sprites/Energy.png
+Assets/LayerAwareBloom/Samples/Sprites/Flamingo.png
 Assets/LayerAwareBloom/Shaders/RenderingLayerBloom.shader
 Assets/LayerAwareBloom/Shaders/UIBloomNative.shader
 Assets/LayerAwareBloom/Shaders/UIBloomSource.shader
 Assets/LayerAwareBloom/Third-Party Notices.txt
+Assets/TextMesh Pro/Fonts/LiberationSans - OFL.txt
+Assets/TextMesh Pro/Fonts/LiberationSans.ttf
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Fallback.asset
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset
+Assets/TextMesh Pro/Resources/LineBreaking Following Characters.txt
+Assets/TextMesh Pro/Resources/LineBreaking Leading Characters.txt
+Assets/TextMesh Pro/Resources/Materials/LiberationSans SDF - Drop Shadow.mat
+Assets/TextMesh Pro/Resources/Materials/LiberationSans SDF - Outline.mat
+Assets/TextMesh Pro/Resources/Sprite Assets/EmojiOne.asset
+Assets/TextMesh Pro/Resources/Style Sheets/Default Style Sheet.asset
+Assets/TextMesh Pro/Resources/TMP Settings.asset
+Assets/TextMesh Pro/Shaders/SDFFunctions.hlsl
+Assets/TextMesh Pro/Shaders/TMP_Bitmap.shader
+Assets/TextMesh Pro/Shaders/TMP_Bitmap-Custom-Atlas.shader
+Assets/TextMesh Pro/Shaders/TMP_Bitmap-Mobile.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF Overlay.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF SSD.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-HDRP LIT.shadergraph
+Assets/TextMesh Pro/Shaders/TMP_SDF-HDRP UNLIT.shadergraph
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Masking.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Overlay.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile SSD.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile-2-Pass.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-Surface.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-Surface-Mobile.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-URP Lit.shadergraph
+Assets/TextMesh Pro/Shaders/TMP_SDF-URP Unlit.shadergraph
+Assets/TextMesh Pro/Shaders/TMP_Sprite.shader
+Assets/TextMesh Pro/Shaders/TMPro.cginc
+Assets/TextMesh Pro/Shaders/TMPro_Mobile.cginc
+Assets/TextMesh Pro/Shaders/TMPro_Properties.cginc
+Assets/TextMesh Pro/Shaders/TMPro_Surface.cginc
+Assets/TextMesh Pro/Sprites/EmojiOne Attribution.txt
+Assets/TextMesh Pro/Sprites/EmojiOne.json
+Assets/TextMesh Pro/Sprites/EmojiOne.png
+Assets/ThirdParty/VFX/Free Fire VFX URP/Audio/SFX_FireSmall_L.wav
+Assets/ThirdParty/VFX/Free Fire VFX URP/Lights/VFX_Point_Light.prefab
+Assets/ThirdParty/VFX/Free Fire VFX URP/Materials/M_VFX_Ashes_01.mat
+Assets/ThirdParty/VFX/Free Fire VFX URP/Materials/M_VFX_Fire_02.mat
+Assets/ThirdParty/VFX/Free Fire VFX URP/Materials/M_VFX_Fire_Quad_01.mat
+Assets/ThirdParty/VFX/Free Fire VFX URP/Materials/M_VFX_Heat_Haze_02.mat
+Assets/ThirdParty/VFX/Free Fire VFX URP/Particles/VFX_Fire_Floor_01.prefab
+Assets/ThirdParty/VFX/Free Fire VFX URP/Shaders/SH_Vefects_VFX_URP_Fire_Flames_01.shader
+Assets/ThirdParty/VFX/Free Fire VFX URP/Shaders/SH_Vefects_VFX_URP_Heat_Haze_01.shader
+Assets/ThirdParty/VFX/Free Fire VFX URP/Shaders/SH_Vefects_VFX_URP_Particles_Erosion_01.shader
+Assets/ThirdParty/VFX/Free Fire VFX URP/Textures/T_VFX_Ashes_01.tga
+Assets/ThirdParty/VFX/Free Fire VFX URP/Textures/T_VFX_Dust_01.tga
+Assets/ThirdParty/VFX/Free Fire VFX URP/Textures/T_VFX_Fire_Ground_Mask_01.tga
+Assets/ThirdParty/VFX/Free Fire VFX URP/Textures/T_VFX_Fire_Mask_01.tga
+Assets/ThirdParty/VFX/Free Fire VFX URP/Textures/T_VFX_Gradient_Up_Down_01.tga
+Assets/ThirdParty/VFX/Free Fire VFX URP/Textures/T_VFX_Noise_01.tga
+Assets/ThirdParty/VFX/Free Fire VFX URP/Textures/T_VFX_Noise_03.tga
+Assets/ThirdParty/VFX/Free Fire VFX URP/Textures/T_VFX_Noise_07.tga
+Assets/ThirdParty/VFX/Free Fire VFX URP/Textures/T_VFX_Noise_08.tga
+Assets/ThirdParty/VFX/Free Fire VFX URP/Textures/T_VFX_Noise_Normal_02.tga

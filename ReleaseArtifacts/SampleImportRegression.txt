@@ -1,0 +1,98 @@
+OK: Reproduced template pipeline with inherited Unity Bloom
+OK: Template renderer has no selective bloom feature
+OK: GettingStarted: scripts present on Layer Aware Bloom Volume
+OK: GettingStarted: scripts present on Main Camera
+OK: GettingStarted: scripts present on Geometry
+OK: GettingStarted: scripts present on Group 1 - Wide Cyan Bloom
+OK: GettingStarted: scripts present on Group 1 - Transparent Magenta Bloom
+OK: GettingStarted: scripts present on Group 2 - Tight Amber Bloom
+OK: GettingStarted: scripts present on Group 2 - Transparent Green Bloom
+OK: GettingStarted: scripts present on Unselected - No Bloom
+OK: GettingStarted: setup menu executed
+OK: GettingStarted: Graphics and Quality agree
+OK: GettingStarted: unique packaged pipeline selected
+OK: GettingStarted: pipeline defaults suppress inherited Unity Bloom
+OK: GettingStarted: active renderer has scene-driven selective bloom
+OK: GettingStarted: renderer GUID resolves to packaged asset
+OK: BloomGroups: scripts present on Layer Aware Bloom Volume
+OK: BloomGroups: scripts present on Main Camera
+OK: BloomGroups: scripts present on SceneController
+OK: BloomGroups: scripts present on Geometry
+OK: BloomGroups: scripts present on WireframeCube
+OK: BloomGroups: scripts present on Pivot
+OK: BloomGroups: scripts present on Light
+OK: BloomGroups: scripts present on CubesRoot
+OK: BloomGroups: scripts present on Cube (0)
+OK: BloomGroups: scripts present on Mesh
+OK: BloomGroups: scripts present on Canvas
+OK: BloomGroups: scripts present on NoBloomText
+OK: BloomGroups: scripts present on Cube (1)
+OK: BloomGroups: scripts present on Mesh
+OK: BloomGroups: scripts present on Canvas (1)
+OK: BloomGroups: scripts present on NoBloomText
+OK: BloomGroups: scripts present on Cube (2)
+OK: BloomGroups: scripts present on Mesh
+OK: BloomGroups: scripts present on Canvas
+OK: BloomGroups: scripts present on NoBloomText
+OK: BloomGroups: scripts present on Cube (3)
+OK: BloomGroups: scripts present on Mesh
+OK: BloomGroups: scripts present on Canvas
+OK: BloomGroups: scripts present on NoBloomText
+OK: BloomGroups: scripts present on Cube (4)
+OK: BloomGroups: scripts present on Mesh
+OK: BloomGroups: scripts present on Canvas
+OK: BloomGroups: scripts present on NoBloomText
+OK: BloomGroups: scripts present on Cube (5)
+OK: BloomGroups: scripts present on Mesh
+OK: BloomGroups: scripts present on Canvas
+OK: BloomGroups: scripts present on NoBloomText
+OK: BloomGroups: scripts present on Plane
+OK: BloomGroups: scripts present on EventSystem
+OK: BloomGroups: scripts present on Particle System
+OK: BloomGroups: scripts present on VFX_Fire_Floor_01
+OK: BloomGroups: scripts present on Light
+OK: BloomGroups: scripts present on Flames Small
+OK: BloomGroups: scripts present on Ashes
+OK: BloomGroups: scripts present on Distortion
+OK: BloomGroups: scripts present on Fire Quad
+OK: BloomGroups: scripts present on Sprite
+OK: BloomGroups: setup menu executed
+OK: BloomGroups: Graphics and Quality agree
+OK: BloomGroups: unique packaged pipeline selected
+OK: BloomGroups: pipeline defaults suppress inherited Unity Bloom
+OK: BloomGroups: active renderer has scene-driven selective bloom
+OK: BloomGroups: renderer GUID resolves to packaged asset
+OK: BloomSources: scripts present on Layer Aware Bloom Volume
+OK: BloomSources: scripts present on Main Camera
+OK: BloomSources: scripts present on EventSystem
+OK: BloomSources: scripts present on Geometry
+OK: BloomSources: scripts present on VFX_Fire
+OK: BloomSources: scripts present on Light
+OK: BloomSources: scripts present on Flames Small
+OK: BloomSources: scripts present on Ashes
+OK: BloomSources: scripts present on Distortion
+OK: BloomSources: scripts present on Fire Quad
+OK: BloomSources: scripts present on FlamingoSprite
+OK: BloomSources: scripts present on WorldCanvas
+OK: BloomSources: scripts present on EdgeMain
+OK: BloomSources: scripts present on Energy
+OK: BloomSources: scripts present on AbitityText
+OK: BloomSources: scripts present on ButtonQ
+OK: BloomSources: scripts present on Text (TMP)
+OK: BloomSources: scripts present on LabelCanvas
+OK: BloomSources: scripts present on Text (TMP) 
+OK: BloomSources: scripts present on Text (TMP)
+OK: BloomSources: scripts present on Text (TMP)
+OK: BloomSources: setup menu executed
+OK: BloomSources: Graphics and Quality agree
+OK: BloomSources: unique packaged pipeline selected
+OK: BloomSources: pipeline defaults suppress inherited Unity Bloom
+OK: BloomSources: active renderer has scene-driven selective bloom
+OK: BloomSources: renderer GUID resolves to packaged asset
+OK: Scene Volume changes selected-source pixels: max delta=6,241211
+OK: Evaluated regular Unity Bloom remains zero
+OK: Unselected HDR cube is visible during exclusion check
+OK: Unselected HDR cube receives no selective bloom: max delta=0
+OK: Weight zero does not restore template Bloom
+OK: Weight zero disables scene selective bloom
+PASS

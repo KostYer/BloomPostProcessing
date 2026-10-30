@@ -4,9 +4,9 @@
 
 Use the Universal Renderer with Render Graph, Linear color space, HDR enabled, and SDR display output. The reference project uses Unity 6000.3.14f1, URP 17.3.0, and uGUI 2.0.0.
 
-The exported `.unitypackage` declares its URP and uGUI dependencies. When Unity displays the Package Manager dependencies prompt during import, select **Install/Upgrade**. Unity installs the required packages and resolves their dependencies, including SRP Core and Collections, before importing the bloom assets. See [Unity's import instructions](https://learn.unity.com/tutorial/set-up-the-unity-editor?version=6.2).
+The exported `.unitypackage` declares its URP, uGUI, and Input System dependencies. When Unity displays the Package Manager dependencies prompt during import, select **Install/Upgrade**. Unity installs the required packages and resolves their dependencies, including SRP Core and Collections, before importing the bloom assets. Input System is used by the interactive sample scenes. See [Unity's import instructions](https://learn.unity.com/tutorial/set-up-the-unity-editor?version=6.2).
 
-If you copy the source files directly or skip that prompt, install URP and uGUI through Package Manager. After installation, configure the renderer feature and camera as described below; installing packages does not assign a render pipeline to the project.
+If you copy the source files directly or skip that prompt, install URP and uGUI through Package Manager, plus Input System for the interactive samples. After installation, configure the renderer feature and camera as described below; installing packages does not assign a render pipeline to the project.
 
 ## Add selective bloom to your project
 
@@ -30,7 +30,16 @@ Expand **Optional Additions** to expose Soft Knee, Radius, and Stop NaN / Infini
 
 ## Getting Started sample
 
-Open `Samples/Scenes/GettingStarted.unity`. Assign `Samples/Settings/Rendering/GettingStarted/DemoPipeline.asset` in a disposable project's Graphics settings and clear or replace any Quality pipeline override. The cyan and amber cubes use separate bloom groups; the white cube is unselected. Its materials, scripts, and Volume Profile are under `Samples/Materials/GettingStarted/`, `Samples/Scripts/GettingStarted/`, and `Samples/Settings/Volumes/`, respectively. The sample uses Unity primitives and URP Unlit materials and needs no imported artwork, font, model, or VFX pack. Its smoke-check component is inert unless explicitly launched with the release-test command-line flag.
+Open `Samples/Scenes/GettingStarted.unity`, then choose **Tools > Layer Aware Bloom > Samples > Use Pipeline for Active Sample**, or press **Use Sample Pipeline** in the sample's Layer Bloom Volume inspector. This assigns `Samples/Settings/Rendering/GettingStarted/DemoPipeline.asset` in Graphics and the current Quality level. The cyan and amber cubes use separate bloom groups; the white cube is unselected. Its materials, scripts, and Volume Profile are under `Samples/Materials/GettingStarted/`, `Samples/Scripts/GettingStarted/`, and `Samples/Settings/Volumes/`, respectively. The sample uses Unity primitives and URP Unlit materials and needs no imported artwork, font, model, or VFX pack. Its smoke-check component is inert unless explicitly launched with the release-test command-line flag.
+
+Importing a scene does not activate its renderer feature: a project's existing URP template renderer can still be selected until you run the sample setup. The sample pipelines use their own default Volume Profile with Unity Bloom intensity zero, so template post-processing cannot make the unselected cube glow. The scene Volume must have Weight 1 for its bloom settings to contribute. A bright white cube by itself is expected; it should have no surrounding bloom halo.
+
+## Additional sample scenes
+
+- `Samples/Scenes/BloomGroups.unity` demonstrates independently controlled bloom groups with moving objects and interactive controls.
+- `Samples/Scenes/BloomSources.unity` demonstrates particle VFX, sprites, and Canvas UI sources.
+
+With either scene open, choose **Tools > Layer Aware Bloom > Samples > Use Pipeline for Active Sample**. This assigns `Samples/Settings/Rendering/Showcase/ShowcasePipeline.asset` in Graphics and the current Quality level. Their rendering settings, Volume Profiles, artwork, TextMesh Pro resources, and referenced fire VFX are included. Enable **Input System Package (New)** or **Both** under **Project Settings > Player > Active Input Handling** for the sample UI controls, and restart the Editor if Unity requests it. The bloom feature itself does not require Input System.
 
 ## UI
 
@@ -49,6 +58,8 @@ When a rendered camera has both Unity's Volume Bloom and this feature active, an
 | Nothing glows | Active renderer feature, group enabled, nonempty mask, HDR, positive intensity/clamp, nonblack tint, source above threshold. |
 | Everything glows | Unity Bloom may also be enabled, or the group selects the Default layer used by many objects. |
 | One object misses a later group | First active matching group owns it. |
+| Sample Volume has no effect after import | Use Pipeline for Active Sample; confirm Volume Weight is 1 and the Layer Bloom Volume override is enabled. |
+| Unselected sample cube has a halo | Check Unity Bloom in the active pipeline's default Volume Profile as well as scene Volumes; use the packaged sample pipeline. |
 | UI does not glow | Supported canvas mode, assigned camera, supported Graphic/material, and matching UI Bloom Source layers. |
 | VFX parent is selected but particles do not glow | Assign layers to child renderers, not just the parent GameObject. |
 | Lights stop affecting an object | Restore its original lighting Rendering Layers as well as the bloom selection layer. |

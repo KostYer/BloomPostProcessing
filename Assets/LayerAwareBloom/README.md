@@ -2,9 +2,11 @@
 
 Start with [Quick Start](Documentation/QuickStart.md), [Performance and Quality](Documentation/Performance.md), [Compatibility](Documentation/Compatibility.md), and [Release Preparation](Documentation/ReleasePreparation.md). Changes are listed in [CHANGELOG](CHANGELOG.md).
 
-The release candidate includes the primitive-based `Samples/Scenes/GettingStarted.unity` demo and its dedicated materials, scripts, and settings. The broader sample scenes/art described in the project layout below belong to the development project and are excluded from the explicit release export.
+The release candidate includes all three sample scenes: `Samples/Scenes/GettingStarted.unity`, `BloomGroups.unity`, and `BloomSources.unity`, with their scripts, materials, models, sprites, fonts, Volume Profiles, rendering settings, and referenced fire VFX. Recovery scenes are excluded.
 
-The exported package includes URP and uGUI dependency declarations. Select **Install/Upgrade** if Unity prompts during import; Package Manager handles the required packages and their dependencies. See [Quick Start](Documentation/QuickStart.md) for renderer setup after installation.
+The exported package includes URP, uGUI, and Input System dependency declarations. Select **Install/Upgrade** if Unity prompts during import; Package Manager handles the required packages and their dependencies. See [Quick Start](Documentation/QuickStart.md) for renderer setup after installation.
+
+After opening a sample scene, choose **Tools > Layer Aware Bloom > Samples > Use Pipeline for Active Sample**. This selects the dedicated sample renderer in Graphics and the current Quality level. Sample settings have their own asset identities and disable inherited Unity Bloom through a sample default profile.
 
 **Rendering Layer Bloom** is a URP renderer feature that selects opaque surfaces and transparent renderers by Rendering Layer, builds up to six independent bloom groups, and optionally grades the combined image.
 

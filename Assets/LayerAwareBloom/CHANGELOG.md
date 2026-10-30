@@ -12,7 +12,8 @@
 - Optional HDR color grading and Unity Neutral/ACES tonemapping integration.
 - Editor setup diagnostics, including per-camera warnings for simultaneous Unity Bloom.
 - Separate runtime/editor/sample assemblies and portable verification tools.
-- Explicit release export with a primitive-based Getting Started demo and offline documentation.
-- Exported packages declare URP and uGUI dependencies for Unity's native Install/Upgrade import step.
+- Release export includes GettingStarted, BloomGroups, and BloomSources with their assets, settings, and offline documentation.
+- Exported packages declare URP, uGUI, and sample Input System dependencies for Unity's native Install/Upgrade import step.
+- Dedicated sample renderer/pipeline assets prevent Unity template GUID collisions; sample setup assigns Graphics and Quality together and isolates inherited Unity Bloom defaults.
 
 Release candidate. Publisher submission review remains outstanding.

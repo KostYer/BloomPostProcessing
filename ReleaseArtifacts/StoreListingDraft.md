@@ -10,8 +10,8 @@ Selective bloom for Unity 6 URP, with up to six independently controlled Renderi
 - Supported Camera/World Space uGUI selection, masks and HDR source brightness controls.
 - Independent Neutral/ACES tonemapping and optional HDR color grading.
 - Collapsible additions, full-group reset with Undo, setup warnings and simultaneous Unity Bloom diagnostics.
-- Getting Started demo using primitive geometry, offline instructions, and explicit verification tools.
-- URP and uGUI dependency installation through Unity's native Install/Upgrade import prompt.
+- GettingStarted, BloomGroups, and BloomSources sample scenes with their artwork, VFX, settings, offline instructions, and explicit verification tools.
+- URP, uGUI, and sample Input System dependency installation through Unity's native Install/Upgrade import prompt.
 
 ## Requirements and limitations
 
@@ -23,7 +23,7 @@ Adjust group counts, bloom resolution, iterations, and filtering quality to bala
 
 ## Third-party notice
 
-Includes adapted Unity URP bloom filtering under the Unity Companion License for Unity-dependent projects. See Third-Party Notices.txt and Documentation/Licenses. Requires Unity Registry dependencies; imported development artwork and fire VFX are not included.
+Includes adapted Unity URP bloom filtering under the Unity Companion License for Unity-dependent projects. Sample artwork, fire VFX, fonts, and TextMesh Pro resources retain their original authorship and licensing. See Third-Party Notices.txt and Documentation/Licenses. Unity Registry dependencies are installed through Package Manager.
 
 ## AI description draft
 
