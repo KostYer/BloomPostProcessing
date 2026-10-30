@@ -11,6 +11,7 @@ Selective bloom for Unity 6 URP, with up to six independently controlled Renderi
 - Independent Neutral/ACES tonemapping and optional HDR color grading.
 - Collapsible additions, full-group reset with Undo, setup warnings and simultaneous Unity Bloom diagnostics.
 - Getting Started demo using primitive geometry, offline instructions, and explicit verification tools.
+- URP and uGUI dependency installation through Unity's native Install/Upgrade import prompt.
 
 ## Requirements and limitations
 

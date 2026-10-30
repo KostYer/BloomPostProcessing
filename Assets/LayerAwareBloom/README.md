@@ -4,6 +4,8 @@ Start with [Quick Start](Documentation/QuickStart.md), [Performance and Quality]
 
 The release candidate includes the primitive-based `Samples/Scenes/GettingStarted.unity` demo and its dedicated materials, scripts, and settings. The broader sample scenes/art described in the project layout below belong to the development project and are excluded from the explicit release export.
 
+The exported package includes URP and uGUI dependency declarations. Select **Install/Upgrade** if Unity prompts during import; Package Manager handles the required packages and their dependencies. See [Quick Start](Documentation/QuickStart.md) for renderer setup after installation.
+
 **Rendering Layer Bloom** is a URP renderer feature that selects opaque surfaces and transparent renderers by Rendering Layer, builds up to six independent bloom groups, and optionally grades the combined image.
 
 Add it from your Universal Renderer asset's **Add Renderer Feature** menu. Configure **Layer Aware Bloom / Bloom** in a scene Volume Profile. Adding the bloom override in the Inspector also adds Unity's standard **Tonemapping** override with **Neutral** mode. Existing Unity Tonemapping settings are preserved. You can change its mode, disable it, or remove it afterward.

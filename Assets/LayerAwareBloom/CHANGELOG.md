@@ -13,5 +13,6 @@
 - Editor setup diagnostics, including per-camera warnings for simultaneous Unity Bloom.
 - Separate runtime/editor/sample assemblies and portable verification tools.
 - Explicit release export with a primitive-based Getting Started demo and offline documentation.
+- Exported packages declare URP and uGUI dependencies for Unity's native Install/Upgrade import step.
 
 Release candidate. Publisher submission review remains outstanding.

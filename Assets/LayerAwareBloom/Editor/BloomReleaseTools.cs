@@ -114,7 +114,17 @@ namespace LayerAwareBloom.Editor
             foreach (string dependency in AssetDatabase.GetDependencies(paths, true))
                 if (dependency.StartsWith("Assets/") && !paths.Contains(dependency) && !AssetDatabase.IsValidFolder(dependency))
                     throw new InvalidOperationException("Release depends on an excluded asset: " + dependency);
-            AssetDatabase.ExportPackage(paths, "ReleaseArtifacts/LayerAwareBloom-1.0.0-rc2.unitypackage", ExportPackageOptions.Default);
+            string temporaryPackage = "Temp/LayerAwareBloom-" + Guid.NewGuid().ToString("N") + ".unitypackage";
+            Directory.CreateDirectory("Temp");
+            try
+            {
+                AssetDatabase.ExportPackage(paths, temporaryPackage, ExportPackageOptions.Default);
+                BloomPackageDependencies.WriteWithDependencies(temporaryPackage, "ReleaseArtifacts/LayerAwareBloom-1.0.0-rc2.unitypackage");
+            }
+            finally
+            {
+                if (File.Exists(temporaryPackage)) File.Delete(temporaryPackage);
+            }
             File.WriteAllLines("ReleaseArtifacts/PackageContents.txt", paths.OrderBy(p => p));
             Debug.Log("[Layer Aware Bloom] Type: Package export, info: ReleaseArtifacts/LayerAwareBloom-1.0.0-rc2.unitypackage");
         }

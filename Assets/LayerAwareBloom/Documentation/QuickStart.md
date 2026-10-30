@@ -2,7 +2,11 @@
 
 ## Requirements
 
-Use the Universal Renderer with Render Graph, Linear color space, HDR enabled, and SDR display output. The reference project uses Unity 6000.3.14f1, URP 17.3.0, and uGUI 2.0.0. Install URP and uGUI through Unity Package Manager before importing the package. Unity Collections and SRP Core are URP dependencies. The package does not install or modify dependencies automatically.
+Use the Universal Renderer with Render Graph, Linear color space, HDR enabled, and SDR display output. The reference project uses Unity 6000.3.14f1, URP 17.3.0, and uGUI 2.0.0.
+
+The exported `.unitypackage` declares its URP and uGUI dependencies. When Unity displays the Package Manager dependencies prompt during import, select **Install/Upgrade**. Unity installs the required packages and resolves their dependencies, including SRP Core and Collections, before importing the bloom assets. See [Unity's import instructions](https://learn.unity.com/tutorial/set-up-the-unity-editor?version=6.2).
+
+If you copy the source files directly or skip that prompt, install URP and uGUI through Package Manager. After installation, configure the renderer feature and camera as described below; installing packages does not assign a render pipeline to the project.
 
 ## Add selective bloom to your project
 
