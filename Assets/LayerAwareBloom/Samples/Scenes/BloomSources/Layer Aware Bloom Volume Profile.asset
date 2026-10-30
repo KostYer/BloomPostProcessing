@@ -1,0 +1,341 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7fd9488000d3734a9e00ee676215985, type: 3}
+  m_Name: Layer Aware Bloom Volume Profile
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
+  components:
+  - {fileID: 4569848579484417800}
+  - {fileID: 962499539866492829}
+--- !u!114 &962499539866492829
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97c23e3b12dc18c42a140437e53d3951, type: 3}
+  m_Name: Tonemapping
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.Tonemapping
+  active: 1
+  mode:
+    m_OverrideState: 1
+    m_Value: 1
+  neutralHDRRangeReductionMode:
+    m_OverrideState: 0
+    m_Value: 2
+  acesPreset:
+    m_OverrideState: 0
+    m_Value: 3
+  hueShiftAmount:
+    m_OverrideState: 0
+    m_Value: 0
+  detectPaperWhite:
+    m_OverrideState: 0
+    m_Value: 0
+  paperWhite:
+    m_OverrideState: 0
+    m_Value: 300
+  detectBrightnessLimits:
+    m_OverrideState: 0
+    m_Value: 1
+  minNits:
+    m_OverrideState: 0
+    m_Value: 0.005
+  maxNits:
+    m_OverrideState: 0
+    m_Value: 1000
+--- !u!114 &4569848579484417800
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4385e85448954c3a8180ff3c9203ae04, type: 3}
+  m_Name: LayerBloomVolume
+  m_EditorClassIdentifier: LayerAwareBloom.Runtime::LayerAwareBloom.LayerBloomVolume
+  active: 1
+  tonemappingSetupComplete: 1
+  enableBloom:
+    m_OverrideState: 1
+    m_Value: 1
+  group1:
+    enabled:
+      m_OverrideState: 1
+      m_Value: 1
+    renderingLayers:
+      m_OverrideState: 1
+      m_Value:
+        serializedVersion: 0
+        m_Bits: 2
+    threshold:
+      m_OverrideState: 1
+      m_Value: 1
+    intensity:
+      m_OverrideState: 1
+      m_Value: 2
+    tint:
+      m_OverrideState: 1
+      m_Value: {r: 1, g: 1, b: 1, a: 1}
+    clamp:
+      m_OverrideState: 0
+      m_Value: 65472
+    scatter:
+      m_OverrideState: 0
+      m_Value: 0.7
+    maxIterations:
+      m_OverrideState: 0
+      m_Value: 6
+    downscale:
+      m_OverrideState: 0
+      m_Value: 0
+    highQualityFiltering:
+      m_OverrideState: 0
+      m_Value: 0
+    softKnee:
+      m_OverrideState: 0
+      m_Value: 0.5
+    radius:
+      m_OverrideState: 0
+      m_Value: 1
+    stopNaN:
+      m_OverrideState: 0
+      m_Value: 0
+  group2:
+    enabled:
+      m_OverrideState: 1
+      m_Value: 1
+    renderingLayers:
+      m_OverrideState: 1
+      m_Value:
+        serializedVersion: 0
+        m_Bits: 4
+    threshold:
+      m_OverrideState: 1
+      m_Value: 1
+    intensity:
+      m_OverrideState: 1
+      m_Value: 2
+    tint:
+      m_OverrideState: 0
+      m_Value: {r: 1, g: 1, b: 1, a: 1}
+    clamp:
+      m_OverrideState: 0
+      m_Value: 65472
+    scatter:
+      m_OverrideState: 0
+      m_Value: 0.7
+    maxIterations:
+      m_OverrideState: 0
+      m_Value: 6
+    downscale:
+      m_OverrideState: 0
+      m_Value: 0
+    highQualityFiltering:
+      m_OverrideState: 0
+      m_Value: 0
+    softKnee:
+      m_OverrideState: 0
+      m_Value: 0.5
+    radius:
+      m_OverrideState: 0
+      m_Value: 1
+    stopNaN:
+      m_OverrideState: 0
+      m_Value: 0
+  group3:
+    enabled:
+      m_OverrideState: 1
+      m_Value: 1
+    renderingLayers:
+      m_OverrideState: 1
+      m_Value:
+        serializedVersion: 0
+        m_Bits: 8
+    threshold:
+      m_OverrideState: 1
+      m_Value: 1
+    intensity:
+      m_OverrideState: 1
+      m_Value: 6
+    tint:
+      m_OverrideState: 1
+      m_Value: {r: 1, g: 1, b: 1, a: 1}
+    clamp:
+      m_OverrideState: 1
+      m_Value: 65472
+    scatter:
+      m_OverrideState: 1
+      m_Value: 0.629
+    maxIterations:
+      m_OverrideState: 0
+      m_Value: 6
+    downscale:
+      m_OverrideState: 0
+      m_Value: 0
+    highQualityFiltering:
+      m_OverrideState: 1
+      m_Value: 0
+    softKnee:
+      m_OverrideState: 1
+      m_Value: 0.5
+    radius:
+      m_OverrideState: 1
+      m_Value: 1.069
+    stopNaN:
+      m_OverrideState: 1
+      m_Value: 0
+  group4:
+    enabled:
+      m_OverrideState: 1
+      m_Value: 1
+    renderingLayers:
+      m_OverrideState: 0
+      m_Value:
+        serializedVersion: 0
+        m_Bits: 0
+    threshold:
+      m_OverrideState: 0
+      m_Value: 0.9
+    intensity:
+      m_OverrideState: 0
+      m_Value: 0
+    tint:
+      m_OverrideState: 0
+      m_Value: {r: 1, g: 1, b: 1, a: 1}
+    clamp:
+      m_OverrideState: 0
+      m_Value: 65472
+    scatter:
+      m_OverrideState: 0
+      m_Value: 0.7
+    maxIterations:
+      m_OverrideState: 0
+      m_Value: 6
+    downscale:
+      m_OverrideState: 0
+      m_Value: 0
+    highQualityFiltering:
+      m_OverrideState: 0
+      m_Value: 0
+    softKnee:
+      m_OverrideState: 0
+      m_Value: 0.5
+    radius:
+      m_OverrideState: 0
+      m_Value: 1
+    stopNaN:
+      m_OverrideState: 0
+      m_Value: 0
+  group5:
+    enabled:
+      m_OverrideState: 0
+      m_Value: 1
+    renderingLayers:
+      m_OverrideState: 0
+      m_Value:
+        serializedVersion: 0
+        m_Bits: 0
+    threshold:
+      m_OverrideState: 0
+      m_Value: 0.9
+    intensity:
+      m_OverrideState: 0
+      m_Value: 0
+    tint:
+      m_OverrideState: 0
+      m_Value: {r: 1, g: 1, b: 1, a: 1}
+    clamp:
+      m_OverrideState: 0
+      m_Value: 65472
+    scatter:
+      m_OverrideState: 0
+      m_Value: 0.7
+    maxIterations:
+      m_OverrideState: 0
+      m_Value: 6
+    downscale:
+      m_OverrideState: 0
+      m_Value: 0
+    highQualityFiltering:
+      m_OverrideState: 0
+      m_Value: 0
+    softKnee:
+      m_OverrideState: 0
+      m_Value: 0.5
+    radius:
+      m_OverrideState: 0
+      m_Value: 1
+    stopNaN:
+      m_OverrideState: 0
+      m_Value: 0
+  group6:
+    enabled:
+      m_OverrideState: 0
+      m_Value: 1
+    renderingLayers:
+      m_OverrideState: 0
+      m_Value:
+        serializedVersion: 0
+        m_Bits: 0
+    threshold:
+      m_OverrideState: 0
+      m_Value: 0.9
+    intensity:
+      m_OverrideState: 0
+      m_Value: 0
+    tint:
+      m_OverrideState: 0
+      m_Value: {r: 1, g: 1, b: 1, a: 1}
+    clamp:
+      m_OverrideState: 0
+      m_Value: 65472
+    scatter:
+      m_OverrideState: 0
+      m_Value: 0.7
+    maxIterations:
+      m_OverrideState: 0
+      m_Value: 6
+    downscale:
+      m_OverrideState: 0
+      m_Value: 0
+    highQualityFiltering:
+      m_OverrideState: 0
+      m_Value: 0
+    softKnee:
+      m_OverrideState: 0
+      m_Value: 0.5
+    radius:
+      m_OverrideState: 0
+      m_Value: 1
+    stopNaN:
+      m_OverrideState: 0
+      m_Value: 0
+  enableColorGrading:
+    m_OverrideState: 0
+    m_Value: 0
+  exposure:
+    m_OverrideState: 0
+    m_Value: 0
+  contrast:
+    m_OverrideState: 0
+    m_Value: 0
+  saturation:
+    m_OverrideState: 0
+    m_Value: 0
+  colorFilter:
+    m_OverrideState: 0
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
