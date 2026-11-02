@@ -31,7 +31,6 @@ public class SceneController : MonoBehaviour
     private readonly List<CubeMotion> _motions = new List<CubeMotion>();
     private Vector3 _cameraStartOffset;
     private float _cameraOrbitAngle;
-    private bool _cameraRotating = true;
     private LayerBloomVolume _sceneBloom;
 
     private sealed class CubeMotion
@@ -258,8 +257,7 @@ public class SceneController : MonoBehaviour
             return;
 
         Vector3 center = _pivot != null ? _pivot.position : transform.position;
-        if (_cameraRotating)
-            _cameraOrbitAngle = Mathf.Repeat(_cameraOrbitAngle + _cameraOrbitSpeed * Time.deltaTime, 360f);
+        _cameraOrbitAngle = Mathf.Repeat(_cameraOrbitAngle + _cameraOrbitSpeed * Time.deltaTime, 360f);
         Vector3 offset = Quaternion.AngleAxis(_cameraOrbitAngle, Vector3.up) * _cameraStartOffset;
         cameraTransform.position = center + offset;
 
@@ -268,16 +266,6 @@ public class SceneController : MonoBehaviour
             ? Vector3.forward
             : Vector3.up;
         cameraTransform.LookAt(center, up);
-    }
-
-    private void OnGUI()
-    {
-        if (_orbitCamera == null)
-            return;
-
-        string label = _cameraRotating ? "Stop Rotation" : "Rotate";
-        if (GUI.Button(new Rect(16f, 16f, 160f, 40f), label))
-            _cameraRotating = !_cameraRotating;
     }
 
     private static float RandomSpeed(float minimum, float maximum)
