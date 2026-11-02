@@ -22,7 +22,9 @@ public sealed class BloomCycleDemo : MonoBehaviour
     private int CycleGroupCount => _cycleGroups.Count + _volumeCycleGroups.Count;
     private int _disabledBloomGroup = -1;
     private float _bloomCycleElapsed;
+    private SceneController _sceneController;
 
+    private void Awake() => _sceneController = GetComponent<SceneController>();
     private void OnEnable() => StartBloomCycle();
     private void Update() => UpdateBloomCycle();
     private void OnDisable() => StopBloomCycle();
@@ -67,6 +69,10 @@ public sealed class BloomCycleDemo : MonoBehaviour
             StopBloomCycle();
             return;
         }
+
+        // SceneController reads Space before this Update. Preserve the current group and timer.
+        if (_sceneController != null && _sceneController.MotionPaused)
+            return;
 
         StartBloomCycle();
         if (CycleGroupCount == 0)

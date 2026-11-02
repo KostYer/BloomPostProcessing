@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using LayerAwareBloom;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 
+[DefaultExecutionOrder(-100)]
 public class SceneController : MonoBehaviour
 {
     private const float LabelFadeDuration = 0.15f;
@@ -31,6 +33,8 @@ public class SceneController : MonoBehaviour
     private readonly List<CubeMotion> _motions = new List<CubeMotion>();
     private Vector3 _cameraStartOffset;
     private float _cameraOrbitAngle;
+    private bool _motionPaused;
+    public bool MotionPaused => _motionPaused;
     private LayerBloomVolume _sceneBloom;
 
     private sealed class CubeMotion
@@ -126,6 +130,13 @@ public class SceneController : MonoBehaviour
 
     private void Update()
     {
+        // Temporary sample control: Space pauses cube movement/spin and the camera orbit.
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
+            _motionPaused = !_motionPaused;
+
+        if (_motionPaused)
+            return;
+
         Vector3 center = _pivot != null ? _pivot.position : transform.position;
         float radius = Mathf.Max(0f, _maxDistance);
         float deltaTime = Time.deltaTime;
@@ -249,7 +260,7 @@ public class SceneController : MonoBehaviour
     {
         UpdateBloomLabels();
 
-        if (_orbitCamera == null || _cameraStartOffset.sqrMagnitude < 0.000001f)
+        if (_motionPaused || _orbitCamera == null || _cameraStartOffset.sqrMagnitude < 0.000001f)
             return;
 
         Transform cameraTransform = _orbitCamera.transform;
