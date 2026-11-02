@@ -1,4 +1,4 @@
-Layer Aware Bloom — third-party notices
+Layer Aware Bloom вЂ” third-party notices
 
 Unity Universal Render Pipeline and SRP Core
 Copyright (c) 2020 Unity Technologies ApS (URP package notice).
@@ -9,4 +9,4 @@ URP/SRP Core are licensed under the Unity Companion License for Unity-dependent 
 
 Dependencies supplied by Unity Package Manager: com.unity.render-pipelines.universal 17.3.0 (with its SRP Core/Collections dependencies), com.unity.ugui 2.0.0, and com.unity.inputsystem 1.19.0 for the interactive samples. Their package notices apply. These Unity Package Manager packages are installed through Unity rather than bundled as package source.
 
-The Getting Started demo uses Unity primitive geometry and URP Unlit materials. BloomGroups and BloomSources include their referenced sample artwork and resources: the Free Fire VFX URP effect under Assets/ThirdParty/VFX, image sprites, font assets, WireframeCube model, and TextMesh Pro resources. These retain their original authorship and licensing; this notice does not relicense them. Liberation Sans and EmojiOne notices are included with the TextMesh Pro resources.
+The Getting Started demo uses Unity primitive geometry and URP Unlit materials. BloomGroups and BloomSources include their referenced sample artwork and resources: the Free Fire VFX URP effect under Assets/LayerAwareBloom/Samples/ThirdParty/VFX, image sprites, font assets, WireframeCube model, and TextMesh Pro resources. These retain their original authorship and licensing; this notice does not relicense them. Liberation Sans and EmojiOne notices are included with the TextMesh Pro resources.

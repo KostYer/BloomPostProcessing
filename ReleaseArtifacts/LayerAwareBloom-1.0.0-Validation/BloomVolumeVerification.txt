@@ -1,0 +1,30 @@
+Scene Volume GPU and blending verification
+OK: Adding layered bloom configures Unity Neutral tonemapping
+OK: Existing Unity tonemapping is preserved without duplication
+OK: Intentionally removed tonemapping is not re-added by Inspector setup
+OK: No custom Volume leaves scene HDR unchanged with camera PP off
+OK: All six nested groups and grading parameters discovered by Volume framework
+Diagnostic baseline RGBA(2.000, 1.000, 0.250, 1.000), output RGBA(3.998, 1.999, 0.500, 1.000), intensity 1, mask 2, enabled True, bloom True, source SceneVolumes
+OK: Scene Volume slot 6 drives bloom with post-processing disabled
+OK: Camera Volume layer mask excludes other scene settings
+OK: Returning to first camera mask restores its settings without stale state
+OK: Volume weight interpolates intensity and other numeric settings
+OK: Weight zero bypasses bloom
+OK: Disabling Bloom override bypasses effect
+OK: Disabling Volume clears camera settings
+OK: Unchecked intensity uses default zero
+OK: Higher-priority Volume overrides only its selected parameter
+OK: Local Volume applies inside collider
+OK: Local Volume outside trigger contributes nothing
+OK: Unity Neutral override maps scene after layered bloom
+OK: Unity ACES override maps scene after layered bloom
+OK: Unity Tonemapping None disables mapping
+OK: Bloom stays HDR with camera post-processing off
+OK: Scene grading works without bloom
+OK: Unloading the Volume scene removes settings
+OK: Sample cycling changes scene-instance override
+OK: Sample cycling leaves shared profile unchanged
+OK: Stopping sample restores scene-instance settings
+OK: Bloom shader valid
+OK: No rendering errors: 
+PASS: 27 checks

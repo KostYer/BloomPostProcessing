@@ -1,0 +1,4 @@
+BloomGroups: opened; no missing scripts; sample pipeline selected
+BloomSources: opened; no missing scripts; sample pipeline selected
+GettingStarted: opened; no missing scripts; sample pipeline selected
+PASS

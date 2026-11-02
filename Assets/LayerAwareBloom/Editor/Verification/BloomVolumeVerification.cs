@@ -136,7 +136,7 @@ namespace LayerAwareBloom.Editor
                 EditorSceneManager.CloseScene(volumeScene,true);
                 Check(Delta(Capture(),baseline)<.005f,"Unloading the Volume scene removes settings");
                 // The development sample animates a private scene profile, never the shared asset.
-                var controllerType=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType("BloomCycleDemo")).FirstOrDefault(t=>t!=null);
+                var controllerType=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType("LayerAwareBloom.Samples.BloomCycleDemo")).FirstOrDefault(t=>t!=null);
                 if(controllerType!=null)
                 {
                     SceneManager.SetActiveScene(scene);

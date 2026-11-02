@@ -1,3 +1,5 @@
+Current 1.0.0 package and validation: [Asset Store package report](AssetStorePackageReport.md). The report below describes the historical rc1 candidate.
+
 # Pre-profiling readiness report
 
 Validated 2026-10-28. Candidate: `LayerAwareBloom-1.0.0-rc1.unitypackage` (74,147 bytes).

@@ -38,7 +38,7 @@ LayerAwareBloom/
     Models/, Sprites/, Fonts/
 ```
 
-Project-wide pipeline assets are in `Assets/Settings/Rendering/` (DesktopRenderer, DesktopPipeline, MobileRenderer, MobilePipeline). Volume profiles and input actions are under `Assets/Settings/Volumes/` and `Assets/Settings/Input/`. The imported fire effects are in `Assets/ThirdParty/VFX/`. TextMesh Pro's standalone material presets are in `Assets/TextMesh Pro/Resources/Materials/`; its font assets keep their standard Resources paths.
+Project-wide pipeline assets are in `Assets/Settings/Rendering/` (DesktopRenderer, DesktopPipeline, MobileRenderer, MobilePipeline). Volume profiles and input actions are under `Assets/Settings/Volumes/` and `Assets/Settings/Input/`. The imported fire effects are in `Assets/LayerAwareBloom/Samples/ThirdParty/VFX/`. TextMesh Pro's standalone material presets are in `Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Resources/Materials/`; its font assets keep their standard Resources paths.
 
 Keep each folder's assets grouped by purpose: materials in Materials, scenes in Scenes, scripts and assembly definitions together, and Volume Profiles and pipeline assets in Settings. New scene Volume Profiles are created under the scene collection's `Settings/Volumes/`, outside the Scenes folder.
 
@@ -62,7 +62,7 @@ A Global Volume is a scene object, not an automatic scene boundary: additively l
 
 The package runs in this order regardless of the order of these two features in the inspector:
 
-**HDR scene → selective bloom → optional grading → tonemapping → display**
+**HDR scene в†’ selective bloom в†’ optional grading в†’ tonemapping в†’ display**
 
 Bloom-only and source debug previews intentionally replace the output afterward and remain untonemapped.
 
@@ -79,10 +79,10 @@ With multiple groups, the feature checks renderer membership once per camera. A 
 Each group has a collapsible **Optional Additions** inspector section, initially closed. Its open/closed state is remembered during the editor session; hiding the controls does not disable their effects. Existing and new groups default to the original Unity-style filtering:
 
 - **Soft Knee: 0.5**. Transition width relative to the linear threshold; 0 gives a hard threshold and 1 a wider transition. The default reproduces the original fixed knee.
-- **Radius: 1**. Multiplies horizontal and vertical blur sample spacing, with a conservative range of 0.5–1.5. Lower values tighten the glow; higher values widen it. Scatter, downscale, and pyramid iterations still affect spread. The default retains the original taps and weights; this does not replace the Gaussian pyramid. At resolutions with only one pyramid level there are no Gaussian blur passes, so radius has no effect.
+- **Radius: 1**. Multiplies horizontal and vertical blur sample spacing, with a conservative range of 0.5вЂ“1.5. Lower values tighten the glow; higher values widen it. Scatter, downscale, and pyramid iterations still affect spread. The default retains the original taps and weights; this does not replace the Gaussian pyramid. At resolutions with only one pyramid level there are no Gaussian blur passes, so radius has no effect.
 - **Stop NaN / Infinity: off**. When enabled, one extra full-resolution pass removes pixels containing invalid RGB from the selected source after transparent/UI capture and before filtering. Valid source pixels are preserved. This protects bloom, not the original scene color or the raw source debug preview. It adds a full-resolution HDR texture and draw per enabled group.
 
-**Reset Group to Defaults** sits outside the optional foldout. In a Volume it clears that group's overrides and resets the mask/intensity to zero. In the legacy Renderer Asset inspector it restores every setting, including the name: Group 1 is enabled on Default, and Groups 2–6 are disabled with empty masks. Other groups are retained. Both support the normal Inspector Undo/Redo workflow.
+**Reset Group to Defaults** sits outside the optional foldout. In a Volume it clears that group's overrides and resets the mask/intensity to zero. In the legacy Renderer Asset inspector it restores every setting, including the name: Group 1 is enabled on Default, and Groups 2вЂ“6 are disabled with empty masks. Other groups are retained. Both support the normal Inspector Undo/Redo workflow.
 
 ### Assigning a VFX hierarchy
 
@@ -90,7 +90,7 @@ Add **Rendering Layer Assigner** to the effect root, select its **Rendering Laye
 
 ### Canvas UI
 
-Add **UI Bloom Source** (Add Component > Rendering) to an Image, Raw Image, legacy Text, or parent Canvas. Choose the same **Rendering Layers** as a bloom group. **Include Children** applies the selection to descendants; the closest applicable component wins. A child component with an empty mask, or a disabled component, opts its subtree out of inherited bloom. **Emission Multiplier** increases brightness only in the HDR bloom source, leaving the normal UI unchanged. Start with 2–4 for a white PNG and a group threshold of 1.
+Add **UI Bloom Source** (Add Component > Rendering) to an Image, Raw Image, legacy Text, or parent Canvas. Choose the same **Rendering Layers** as a bloom group. **Include Children** applies the selection to descendants; the closest applicable component wins. A child component with an empty mask, or a disabled component, opts its subtree out of inherited bloom. **Emission Multiplier** increases brightness only in the HDR bloom source, leaving the normal UI unchanged. Start with 2вЂ“4 for a white PNG and a group threshold of 1.
 
 Supported render modes are **Screen Space - Camera** (with its Render Camera assigned) and **World Space**, on supported base cameras. **Screen Space - Overlay is ignored.** UI uses the same first-active-group ownership as meshes, including preview behavior and fallback when an earlier group is disabled or has zero output.
 

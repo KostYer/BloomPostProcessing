@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0-rc1 — Unreleased
+## 1.0.0-rc1 вЂ” Unreleased
 
 - Scene Volume Profiles control bloom/grading through a custom override and tonemapping through Unity's standard override; renderer features default to Scene Volumes, with explicit legacy Renderer Asset mode and a scene-profile migration button.
 
@@ -12,6 +12,8 @@
 - Optional HDR color grading and Unity Neutral/ACES tonemapping integration.
 - Editor setup diagnostics, including per-camera warnings for simultaneous Unity Bloom.
 - Separate runtime/editor/sample assemblies and portable verification tools.
+- Sample scripts use the LayerAwareBloom.Samples namespace, with migration attributes for existing scene components.
+- Bundled demo resources live under Samples/ThirdParty so the export has one LayerAwareBloom root folder.
 - Release export includes GettingStarted, BloomGroups, and BloomSources with their assets, settings, and offline documentation.
 - Exported packages declare URP, uGUI, and sample Input System dependencies for Unity's native Install/Upgrade import step.
 - Dedicated sample renderer/pipeline assets prevent Unity template GUID collisions; sample setup assigns Graphics and Quality together and isolates inherited Unity Bloom defaults.

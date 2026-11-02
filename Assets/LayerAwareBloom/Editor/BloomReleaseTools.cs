@@ -13,6 +13,7 @@ namespace LayerAwareBloom.Editor
 {
     public static class BloomReleaseTools
     {
+        public const string PackagePath = "ReleaseArtifacts/LayerAwareBloom-1.0.0.unitypackage";
         public const string SamplesRoot = "Assets/LayerAwareBloom/Samples";
         public const string ScenePath = SamplesRoot + "/Scenes/GettingStarted.unity";
         public const string RenderingRoot = SamplesRoot + "/Settings/Rendering/GettingStarted";
@@ -27,7 +28,7 @@ namespace LayerAwareBloom.Editor
             ScenePath, SamplesRoot + "/Scenes/BloomGroups.unity", SamplesRoot + "/Scenes/BloomSources.unity",
             SamplesRoot + "/Scripts", SamplesRoot + "/Shaders", SamplesRoot + "/Materials",
             SamplesRoot + "/Settings", SamplesRoot + "/Models", SamplesRoot + "/Sprites", SamplesRoot + "/Fonts",
-            "Assets/TextMesh Pro"
+            SamplesRoot + "/ThirdParty/TextMesh Pro"
         };
 
         [MenuItem("Tools/Layer Aware Bloom/Release/Create Getting Started Demo")]
@@ -134,14 +135,14 @@ namespace LayerAwareBloom.Editor
             try
             {
                 AssetDatabase.ExportPackage(paths, temporaryPackage, ExportPackageOptions.Default);
-                BloomPackageDependencies.WriteWithDependencies(temporaryPackage, "ReleaseArtifacts/LayerAwareBloom-1.0.0-rc2.unitypackage");
+                BloomPackageDependencies.WriteWithDependencies(temporaryPackage, PackagePath);
             }
             finally
             {
                 if (File.Exists(temporaryPackage)) File.Delete(temporaryPackage);
             }
             File.WriteAllLines("ReleaseArtifacts/PackageContents.txt", paths.OrderBy(p => p));
-            Debug.Log("[Layer Aware Bloom] Type: Package export, info: ReleaseArtifacts/LayerAwareBloom-1.0.0-rc2.unitypackage");
+            Debug.Log("[Layer Aware Bloom] Type: Package export, info: " + PackagePath);
         }
 
         // Run in the disposable clean validation project only, never changes a customer's pipeline from a menu.

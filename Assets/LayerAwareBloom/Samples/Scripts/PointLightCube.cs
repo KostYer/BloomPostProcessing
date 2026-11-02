@@ -1,7 +1,12 @@
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
-[DisallowMultipleComponent]
-public class PointLightCube : MonoBehaviour
+namespace LayerAwareBloom.Samples
 {
-    // Retained for existing scene references. Emission is handled by the material.
+    [DisallowMultipleComponent]
+    [MovedFrom(true, sourceNamespace: "", sourceAssembly: "LayerAwareBloom.Samples", sourceClassName: "PointLightCube")]
+    public class PointLightCube : MonoBehaviour
+    {
+        // Retained for existing scene references. Emission is handled by the material.
+    }
 }

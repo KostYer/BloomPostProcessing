@@ -157,7 +157,7 @@ namespace LayerAwareBloom.Editor
                 VerifyLitTransparency(feature, camera, rt, scene, opaqueMaterial);
                 VerifyTransparentEmission(feature, camera, rt, scene);
 
-                const string prefabPath = "Assets/ThirdParty/VFX/Free Fire VFX URP/Particles/VFX_Fire_Floor_01.prefab";
+                const string prefabPath = "Assets/LayerAwareBloom/Samples/ThirdParty/VFX/Free Fire VFX URP/Particles/VFX_Fire_Floor_01.prefab";
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
                 if (prefab != null)
                 {

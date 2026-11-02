@@ -1,0 +1,22 @@
+Optional bloom additions: GPU and serialization checks
+OK Legacy serialized group receives neutral defaults
+OK New groups receive neutral defaults
+OK Inspector reset restores core settings and additions without changing another group
+OK First group reset restores every field to fresh-feature defaults
+OK Spare group reset restores disabled, empty-layer defaults
+SKIP pre-change comparison: no Temp/BloomBeforeAdditions.shader.txt
+OK Soft knee affects near-threshold light, HQ=False
+OK Soft knee affects near-threshold light, HQ=True
+OK Radius changes blur spread in pass 3: 2,854 < 11,416 < 25,686
+OK Radius changes blur spread in pass 4: 0,838 < 2,850 < 6,098
+OK Sanitizer removes NaN and both infinities
+OK Invalid pixels become black
+OK Sanitizer preserves all finite pixels exactly
+OK Clean source stays finite in prefilter, HQ=False
+OK Clean source stays finite in prefilter, HQ=True
+OK Bloom shader compiled
+OK UI integration with defaults
+OK Transparency integration with defaults
+OK UI integration with additions enabled
+OK Transparency integration with additions enabled
+PASS
