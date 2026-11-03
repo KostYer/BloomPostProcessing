@@ -1,4 +1,3 @@
-BloomGroups: opened; no missing scripts; sample pipeline selected
-BloomSources: opened; no missing scripts; sample pipeline selected
-GettingStarted: opened; no missing scripts; sample pipeline selected
-PASS
+PASS GettingStarted: no missing scripts; Assets/LayerAwareBloom/Samples/Settings/Rendering/GettingStarted/DemoPipeline.asset
+PASS BloomGroups: no missing scripts; Assets/LayerAwareBloom/Samples/Settings/Rendering/Showcase/ShowcasePipeline.asset
+PASS BloomSources: no missing scripts; Assets/LayerAwareBloom/Samples/Settings/Rendering/Showcase/ShowcasePipeline.asset

@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0-rc1 вЂ” Unreleased
+## 1.0.0 вЂ” Unreleased
 
 - Scene Volume Profiles control bloom/grading through a custom override and tonemapping through Unity's standard override; renderer features default to Scene Volumes, with explicit legacy Renderer Asset mode and a scene-profile migration button.
 
@@ -19,3 +19,7 @@
 - Dedicated sample renderer/pipeline assets prevent Unity template GUID collisions; sample setup assigns Graphics and Quality together and isolates inherited Unity Bloom defaults.
 
 Release candidate. Publisher submission review remains outstanding.
+
+- Samples use Liberation Sans 2.1.5 under the SIL Open Font License 1.1.
+- FireBall replaces the previous fire sample with the used Particle Pack demo effect and its dependencies.
+- Export includes the self-contained VFX folder and its provenance note; transparency verification exercises FireBall.

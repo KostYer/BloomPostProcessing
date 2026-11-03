@@ -1,10 +1,16 @@
-Font Designer:
-  Ascender Corporation.
-  http://www.ascendercorp.com/
+AUTHORS
 
-Original Designer:
-  Steve Matteson
-  http://www.ascendercorp.com/typedesigners.html
+Current Contributors (sorted alphabetically):
+  
+  - Vishal Vijayraghavan  <vishalvvr at fedoraproject dot org>
+      Project Owner/ Maintainer (Current)
+      Red Hat, Inc.
 
-Current Maintainer:
-  Caius Chance <cchance@redhat.com>
+Previous Contributors
+  - Pravin Satpute  <psatpute at redhat dot com>
+      Project Owner/ Maintainer 
+      Red Hat, Inc.
+      
+  - Steve Matteson
+      Original Designer
+      Ascender, Inc.

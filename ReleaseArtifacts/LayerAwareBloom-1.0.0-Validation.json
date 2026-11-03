@@ -1,9 +1,9 @@
 {
   "package": "LayerAwareBloom-1.0.0.unitypackage",
-  "created_utc": "2026-11-02T17:19:51.809676+00:00",
-  "bytes": 4333799,
-  "sha256": "b1cceeac2778e3ad4976f828558079e574ce7b1651e1a12b78ddc73a94c1c0a6",
-  "exported_files": 138,
+  "created_utc": "2026-11-03T15:03:25.198320+00:00",
+  "bytes": 4214191,
+  "sha256": "ace4a8dc9d3ff98b76b08fb051814265b5b286b3aaec8d9aebab479f4b5b8a99",
+  "exported_files": 98,
   "source_and_meta_byte_comparison": "PASS",
   "unique_guids": "PASS",
   "excluded_project_settings_and_automation": "PASS",
@@ -20,23 +20,50 @@
   "asset_roots": [
     "LayerAwareBloom"
   ],
-  "clean_import": "PASS; Unity native importer; exact final archive reimported before validation",
-  "unity": "6000.3.14f1",
-  "graphics_api": "Direct3D 12",
-  "resolved_dependencies": {
-    "com.unity.render-pipelines.universal": "17.3.0",
-    "com.unity.ugui": "2.0.0",
-    "com.unity.inputsystem": "1.19.0"
-  },
-  "asset_store_tools": "12.0.6",
-  "validator_results": {
-    "Pass": 34,
-    "Warning": 3,
-    "Fail": 0,
-    "Undefined": 0
-  },
-  "samples": "3 scenes opened; no missing scripts; dedicated sample pipelines selected",
-  "rendering_validation": "PASS: all 5 groups (double bloom, scene Volumes, transparency, UI, optional additions)",
-  "standalone_player": "Not rebuilt for this archive",
-  "publication": "Not uploaded or submitted; publisher/licensing/marketing review remains"
+  "documentation_platform_wording_check": "PASS",
+  "reexport_reason": "Remove Windows/Direct3D 12 wording from shipped documentation and make build instructions platform-neutral.",
+  "verification_scope": "Re-export and archive audit only. Clean import, rendering, build and Asset Store validator were not rerun for this archive.",
+  "previous_candidate_validation": {
+    "package": "LayerAwareBloom-1.0.0.unitypackage",
+    "created_utc": "2026-11-03T13:29:21.241213+00:00",
+    "bytes": 4350551,
+    "sha256": "668faaf7e74652807bd0660168cfd43d0e195d5e518dfd69a5d724b6fa935c6e",
+    "exported_files": 98,
+    "source_and_meta_byte_comparison": "PASS",
+    "unique_guids": "PASS",
+    "excluded_project_settings_and_automation": "PASS",
+    "scenes": [
+      "Assets/LayerAwareBloom/Samples/Scenes/BloomGroups.unity",
+      "Assets/LayerAwareBloom/Samples/Scenes/BloomSources.unity",
+      "Assets/LayerAwareBloom/Samples/Scenes/GettingStarted.unity"
+    ],
+    "package_dependencies": {
+      "com.unity.render-pipelines.universal": "17.3.0",
+      "com.unity.ugui": "2.0.0",
+      "com.unity.inputsystem": "1.19.0"
+    },
+    "asset_roots": [
+      "LayerAwareBloom"
+    ],
+    "clean_import": "PASS; exact final archive imported using the Unity native importer; exit code 0",
+    "unity": "6000.3.14f1",
+    "graphics_api": "Direct3D 12",
+    "color_space": "Linear",
+    "resolved_dependencies": {
+      "com.unity.render-pipelines.universal": "17.3.0",
+      "com.unity.ugui": "2.0.0",
+      "com.unity.inputsystem": "1.19.0"
+    },
+    "asset_store_tools": "12.0.6",
+    "validator_results": {
+      "Pass": 34,
+      "Warning": 3,
+      "Fail": 0,
+      "Undefined": 0
+    },
+    "samples": "3 scenes opened; no missing scripts; dedicated sample pipelines selected",
+    "rendering_validation": "PASS: all 5 groups (double bloom, scene Volumes, transparency including FireBall, UI, optional additions)",
+    "standalone_player": "PASS; all three sample scenes built, 0 errors and 0 warnings; DX12 smoke passed both quality modes, optional additions, disabled groups and shader inclusion",
+    "publication": "Not uploaded or submitted; publisher details, final marketing and submission review remain"
+  }
 }

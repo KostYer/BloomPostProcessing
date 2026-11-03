@@ -1,0 +1,2 @@
+PASS: player bloom, disabled groups, both quality variants, optional additions, shader inclusion.
+Unity 6000.3.14f1; Direct3D12; Linear

@@ -1,160 +1,82 @@
-Asset Store Tools 12.0.6; Unity 6000.3.14f1
-Category: Tools/Particles & Effects; exported roots only; no portal submission
+Asset Store Tools 12.0.6; UnityPackage; Tools/Particles & Effects
 Status: RanToCompletion
-Compilation errors: False
+Pass: Check Animation Clips
+  No animation clips with invalid names were found!
+Pass: Check Audio Clipping
+  No clipping audio files were detected.
+Pass: Check Colliders
+  All found prefabs have colliders!
+Pass: Check Compressed Files
+  No archives were found in the package content!
+Pass: Check Empty Prefabs
+  No empty prefabs were found!
+Pass: Check External Dependency Manager
+  Google's External Dependency Manager (EDM4U) was not found in your package.
+Pass: Check File Menu Names
+  No MenuItems with invalid names were found!
+Pass: Check Line Endings
+  No scripts with inconsistent line endings were found!
+Pass: Check LODs
+  All found prefabs are meeting the LOD requirements!
+Warning: Check Mesh Prefabs
+  The following models do not have associated prefabs
+Pass: Check Missing Components in Assets
+  No assets have missing components!
+Pass: Check Missing Components in Scenes
+  No missing components were found!
+Pass: Check Model Import Logs
+  No issues were detected when importing your models!
+Pass: Check Model Orientation
+  All found models are facing the right way!
+Pass: Check Model Types
+  All models are of allowed formats!
+Pass: Check Normal Map Textures
+  All normal map textures have the correct texture type!
+Pass: Check Package Naming
+  All package asset names are valid!
+Pass: Check Particle Systems
+  No Particle Systems without Prefabs were found!
+Pass: Check Path Lengths
+  All package content matches the path limit criteria!
+Pass: Check Prefab Transforms
+  All found prefabs were reset!
+Pass: Check Script Compilation
+  All scripts in the project compiled successfully!
+Pass: Check Shader Compilation
+  All found Shaders have no compilation errors!
+Warning: Check SRP Compatible Materials
+  Materials with non-SRP-compatible shaders:
+  Non-SRP-compatible shaders:
+Warning: Check Static Variables
+  The following scripts contain static fields and/or properties. You should take caution that their values are correctly reset during Play mode state change, if needed
 
-[Pass] Check Animation Clips
-No animation clips with invalid names were found!
 
-[Pass] Check Audio Clipping
-No clipping audio files were detected.
 
-[Pass] Check Colliders
-All found prefabs have colliders!
+  The following scripts contain static events. You should take caution that their subscribers are correctly unregistered during Play mode state change, if needed
 
-[Pass] Check Compressed Files
-No archives were found in the package content!
-
-[Pass] Check Empty Prefabs
-No empty prefabs were found!
-
-[Pass] Check External Dependency Manager
-Google's External Dependency Manager (EDM4U) was not found in your package.
-
-[Pass] Check File Menu Names
-No MenuItems with invalid names were found!
-
-[Pass] Check Line Endings
-No scripts with inconsistent line endings were found!
-
-[Pass] Check LODs
-All found prefabs are meeting the LOD requirements!
-
-[Warning] Check Mesh Prefabs
-The following models do not have associated prefabs
-  Assets/LayerAwareBloom/Samples/Models/WireframeCube.fbx (WireframeCube)
-
-[Pass] Check Missing Components in Assets
-No assets have missing components!
-
-[Pass] Check Missing Components in Scenes
-No missing components were found!
-
-[Pass] Check Model Import Logs
-No issues were detected when importing your models!
-
-[Pass] Check Model Orientation
-All found models are facing the right way!
-
-[Pass] Check Model Types
-All models are of allowed formats!
-
-[Pass] Check Normal Map Textures
-All normal map textures have the correct texture type!
-
-[Pass] Check Package Naming
-All package asset names are valid!
-
-[Pass] Check Particle Systems
-No Particle Systems without Prefabs were found!
-
-[Pass] Check Path Lengths
-All package content matches the path limit criteria!
-
-[Pass] Check Prefab Transforms
-All found prefabs were reset!
-
-[Pass] Check Script Compilation
-All scripts in the project compiled successfully!
-
-[Pass] Check Shader Compilation
-All found Shaders have no compilation errors!
-
-[Warning] Check SRP Compatible Materials
-Materials with non-SRP-compatible shaders:
-  Assets/LayerAwareBloom/Samples/Fonts/ARIAL SDF.asset (ARIAL SDF Material)
-  Assets/LayerAwareBloom/Samples/Materials/Sky/ProceduralSky.mat (ProceduralSky)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Fonts/LiberationSans.ttf (Font Material)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Fallback.asset (LiberationSans SDF Material)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset (LiberationSans SDF Material)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Resources/Materials/LiberationSans SDF - Drop Shadow.mat (LiberationSans SDF - Drop Shadow)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Resources/Materials/LiberationSans SDF - Outline.mat (LiberationSans SDF - Outline)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_SDF-HDRP LIT.shadergraph (TMP_SDF-HDRP LIT)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_SDF-HDRP UNLIT.shadergraph (TMP_SDF-HDRP UNLIT)
-Non-SRP-compatible shaders:
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_Bitmap-Custom-Atlas.shader (TextMeshPro/Bitmap Custom Atlas)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_Bitmap-Mobile.shader (TextMeshPro/Mobile/Bitmap)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_Bitmap.shader (TextMeshPro/Bitmap)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_SDF Overlay.shader (TextMeshPro/Distance Field Overlay)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_SDF SSD.shader (TextMeshPro/Distance Field SSD)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_SDF-HDRP LIT.shadergraph (TextMeshPro/SRP/TMP_SDF-HDRP LIT)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_SDF-HDRP UNLIT.shadergraph (TextMeshPro/SRP/TMP_SDF-HDRP UNLIT)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_SDF-Mobile Masking.shader (TextMeshPro/Mobile/Distance Field - Masking)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_SDF-Mobile Overlay.shader (TextMeshPro/Mobile/Distance Field Overlay)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_SDF-Mobile SSD.shader (TextMeshPro/Mobile/Distance Field SSD)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_SDF-Mobile-2-Pass.shader (TextMeshPro/Mobile/Distance Field - 2 Pass)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader (TextMeshPro/Mobile/Distance Field)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_SDF-Surface-Mobile.shader (TextMeshPro/Mobile/Distance Field (Surface))
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_SDF-Surface.shader (TextMeshPro/Distance Field (Surface))
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_SDF.shader (TextMeshPro/Distance Field)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Shaders/TMP_Sprite.shader (TextMeshPro/Sprite)
-  Assets/LayerAwareBloom/Shaders/UIBloomNative.shader (Hidden/LayerAwareBloom/UIBloomNative)
-
-[Warning] Check Static Variables
-The following scripts contain static fields and/or properties. You should take caution that their values are correctly reset during Play mode state change, if needed
-
-  Assets/LayerAwareBloom/Editor/Inspectors/BloomSetupDiagnostics.cs (BloomSetupDiagnostics)
-
-  Assets/LayerAwareBloom/Editor/Verification/BloomSetupValidation.cs (BloomSetupValidation)
-
-  Assets/LayerAwareBloom/Runtime/RenderingLayerBloomFeature.cs (RenderingLayerBloomFeature)
-The following scripts contain static events. You should take caution that their subscribers are correctly unregistered during Play mode state change, if needed
-
-  Assets/LayerAwareBloom/Runtime/RenderingLayerBloomFeature.cs (RenderingLayerBloomFeature)
-
-[Pass] Check Texture Dimensions
-All texture dimensions are a power of 2!
-
-[Pass] Check Type Namespaces
-All scripts contain valid namespaces!
-
-[Pass] Remove Executable Files
-No executable files were found!
-
-[Pass] Remove JavaScript Files
-No UnityScript / JS files were found!
-
-[Pass] Remove JPG Files
-No JPG/JPEG textures were found!
-
-[Pass] Remove Lossy Audio Files
-No lossy audio files were found!
-
-[Pass] Remove Mixamo Files
-No Mixamo files were found!
-
-[Pass] Remove SpeedTree Files
-No SpeedTree assets have been found!
-
-[Pass] Remove Video Files
-No video files were found, looking good!
-
-[Pass] Check Demo Scenes
-Demo scenes found
-  Assets/LayerAwareBloom/Samples/Scenes/BloomGroups.unity (BloomGroups)
-  Assets/LayerAwareBloom/Samples/Scenes/BloomSources.unity (BloomSources)
-  Assets/LayerAwareBloom/Samples/Scenes/GettingStarted.unity (GettingStarted)
-
-[Pass] Check Documentation
-Found documentation files
-  Assets/LayerAwareBloom/CHANGELOG.md (CHANGELOG)
-  Assets/LayerAwareBloom/Documentation/ReleasePreparation.md (ReleasePreparation)
-  Assets/LayerAwareBloom/README.md (README)
-  Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Fonts/LiberationSans - OFL.txt (LiberationSans - OFL)
-  Assets/LayerAwareBloom/Third-Party Notices.txt (Third-Party Notices)
-
-[Pass] Check Package Size
-Your package does not exceed the maximum allowed package size!
-
-[Pass] Check Project Template Assets
-No common assets that might cause asset clashing were found!
+Pass: Check Texture Dimensions
+  All texture dimensions are a power of 2!
+Pass: Check Type Namespaces
+  All scripts contain valid namespaces!
+Pass: Remove Executable Files
+  No executable files were found!
+Pass: Remove JavaScript Files
+  No UnityScript / JS files were found!
+Pass: Remove JPG Files
+  No JPG/JPEG textures were found!
+Pass: Remove Lossy Audio Files
+  No lossy audio files were found!
+Pass: Remove Mixamo Files
+  No Mixamo files were found!
+Pass: Remove SpeedTree Files
+  No SpeedTree assets have been found!
+Pass: Remove Video Files
+  No video files were found, looking good!
+Pass: Check Demo Scenes
+  Demo scenes found
+Pass: Check Documentation
+  Found documentation files
+Pass: Check Package Size
+  Your package does not exceed the maximum allowed package size!
+Pass: Check Project Template Assets
+  No common assets that might cause asset clashing were found!

@@ -27,7 +27,6 @@ LayerAwareBloom/
   VFX/                     Self-contained FireBall prefab, materials, and textures
   Samples/
     Scenes/                GettingStarted, BloomGroups, and BloomSources demos
-      Recovery/            Recovered scene snapshots
     Scripts/               Demo movement, labels, and bloom cycling
       GettingStarted/      Smoke-check script and its assembly definition
     Materials/             Named demo materials, GlowingCubes, and Sky
@@ -38,13 +37,13 @@ LayerAwareBloom/
     Shaders/               EmissionOnly demo shader
     Models/, Sprites/
     Fonts/
-      LiberationSans-Regular.ttf  Source for dynamic glyph generation
+      LiberationSans-Regular.ttf  OFL 2.1.5 source for dynamic glyph generation
       Resources/Fonts & Materials/  LiberationSans-Regular SDF (atlas/material embedded)
       Licenses/             Original Liberation Sans notices
     ThirdParty/TextMesh Pro/  Required TMP settings, line breaking, style sheet, and SDF shaders
 ```
 
-Project-wide pipeline assets are in `Assets/Settings/Rendering/` (DesktopRenderer, DesktopPipeline, MobileRenderer, MobilePipeline). Volume profiles and input actions are under `Assets/Settings/Volumes/` and `Assets/Settings/Input/`. The imported fire effects are in `Assets/LayerAwareBloom/Samples/ThirdParty/VFX/`. The self-contained FireBall effect is in `Assets/LayerAwareBloom/VFX/`.
+Project-wide pipeline assets are in `Assets/Settings/Rendering/` (DesktopRenderer, DesktopPipeline, MobileRenderer, MobilePipeline). Volume profiles and input actions are under `Assets/Settings/Volumes/` and `Assets/Settings/Input/`. The self-contained FireBall effect is in `Assets/LayerAwareBloom/VFX/`.
 
 The samples and TMP default settings use one font asset: `Samples/Fonts/Resources/Fonts & Materials/LiberationSans-Regular SDF.asset`. Keep its `Samples/Fonts/LiberationSans-Regular.ttf` source because the font generates glyphs dynamically, and retain the notices in `Samples/Fonts/Licenses/`. The font's atlas and material are embedded in its `.asset` file. `Samples/ThirdParty/TextMesh Pro/` contains only the required settings, line-breaking data, default style sheet, SDF shader, mobile fallback shader, and their includes. Arial, extra font weights/styles, the old default/fallback fonts, material presets, and TMP sprite examples are excluded.
 

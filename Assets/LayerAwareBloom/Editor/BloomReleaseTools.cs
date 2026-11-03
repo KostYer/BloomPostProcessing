@@ -24,7 +24,7 @@ namespace LayerAwareBloom.Editor
         static readonly string[] ExportRoots = {
             "Assets/LayerAwareBloom/Runtime", "Assets/LayerAwareBloom/Shaders", "Assets/LayerAwareBloom/Editor",
             "Assets/LayerAwareBloom/Documentation", "Assets/LayerAwareBloom/README.md", "Assets/LayerAwareBloom/CHANGELOG.md",
-            "Assets/LayerAwareBloom/Third-Party Notices.txt",
+            "Assets/LayerAwareBloom/Third-Party Notices.txt", "Assets/LayerAwareBloom/VFX",
             ScenePath, SamplesRoot + "/Scenes/BloomGroups.unity", SamplesRoot + "/Scenes/BloomSources.unity",
             SamplesRoot + "/Scripts", SamplesRoot + "/Shaders", SamplesRoot + "/Materials",
             SamplesRoot + "/Settings", SamplesRoot + "/Models", SamplesRoot + "/Sprites", SamplesRoot + "/Fonts",

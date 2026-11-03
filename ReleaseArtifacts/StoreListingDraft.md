@@ -8,7 +8,7 @@ Selective bloom for Unity 6 URP, with up to six independently controlled Renderi
 - Optional soft knee, blur radius and NaN/Infinity protection.
 - Transparent mesh and particle sources using their original materials.
 - Supported Camera/World Space uGUI selection, masks and HDR source brightness controls.
-- Independent Neutral/ACES tonemapping and optional HDR color grading.
+- Unity Neutral/ACES tonemapping integration and optional HDR color grading.
 - Collapsible additions, full-group reset with Undo, setup warnings and simultaneous Unity Bloom diagnostics.
 - GettingStarted, BloomGroups, and BloomSources sample scenes with their artwork, VFX, settings, offline instructions, and explicit verification tools.
 - URP, uGUI, and sample Input System dependency installation through Unity's native Install/Upgrade import prompt.
@@ -23,7 +23,7 @@ Adjust group counts, bloom resolution, iterations, and filtering quality to bala
 
 ## Third-party notice
 
-Includes adapted Unity URP bloom filtering under the Unity Companion License for Unity-dependent projects. Sample artwork, fire VFX, fonts, and TextMesh Pro resources retain their original authorship and licensing. See Third-Party Notices.txt and Documentation/Licenses. Unity Registry dependencies are installed through Package Manager.
+Includes adapted Unity URP bloom filtering under the Unity Companion License for Unity-dependent projects. Includes Liberation Sans 2.1.5 under SIL OFL 1.1 and the used FireBall effect from Unity Technologies Particle Pack under the Standard Unity Asset Store EULA and Unity's publisher-demo permission. Sample artwork and TextMesh Pro support resources retain their original authorship and licensing. See Third-Party Notices.txt and Documentation/Licenses. Unity Registry dependencies are installed through Package Manager.
 
 ## AI description draft
 

@@ -2,7 +2,7 @@
 
 Layer Aware Bloom uses URP's Universal Renderer with Render Graph, Linear color space, HDR rendering, base Game/Scene View cameras, and SDR display output. Use the quality settings in [Performance and Quality](Performance.md) to configure desktop and mobile projects.
 
-Development reference: Unity 6000.3.14f1, URP 17.3.0, uGUI 2.0.0, Windows/Direct3D 12.
+Reference project versions: Unity 6000.3.14f1, URP 17.3.0, uGUI 2.0.0.
 
 Supported features: opaque meshes; transparent particles/meshes using their original forward materials; up to six Rendering Layer groups; Image/RawImage/legacy Text capture on Camera/World Space uGUI; RectMask2D and nested Masks; optional grading and integration with Unity Neutral/ACES tonemapping.
 

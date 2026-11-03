@@ -9,4 +9,20 @@ URP/SRP Core are licensed under the Unity Companion License for Unity-dependent 
 
 Dependencies supplied by Unity Package Manager: com.unity.render-pipelines.universal 17.3.0 (with its SRP Core/Collections dependencies), com.unity.ugui 2.0.0, and com.unity.inputsystem 1.19.0 for the interactive samples. Their package notices apply. These Unity Package Manager packages are installed through Unity rather than bundled as package source.
 
-The Getting Started demo uses Unity primitive geometry and URP Unlit materials. BloomGroups and BloomSources include their referenced sample artwork and resources: the Free Fire VFX URP effect under Assets/LayerAwareBloom/Samples/ThirdParty/VFX, image sprites, font assets, WireframeCube model, and TextMesh Pro resources. These retain their original authorship and licensing; this notice does not relicense them. The samples use LiberationSans-Regular SDF with its LiberationSans-Regular.ttf source. Original Liberation Sans notices are retained under Samples/Fonts/Licenses (AUTHORS, COPYING, and License.txt). Required TextMesh Pro settings and SDF shaders remain under Samples/ThirdParty/TextMesh Pro; TMP example fonts, presets, and sprite assets are excluded.
+The Getting Started demo uses Unity primitive geometry and URP Unlit materials. BloomGroups and BloomSources include sample image sprites, a WireframeCube model, TextMesh Pro support resources and the FireBall demo effect. These retain their original authorship and licensing; this notice does not relicense them.
+
+Liberation Sans 2.1.5
+Digitized data copyright (c) 2010 Google Corporation, with Reserved Font Arimo, Tinos and Cousine.
+Copyright (c) 2012 Red Hat, Inc., with Reserved Font Name Liberation. Contributors are identified in Samples/Fonts/Licenses/AUTHORS.
+Licensed under the SIL Open Font License, Version 1.1, with Reserved Font Name Liberation. The unmodified LiberationSans-Regular.ttf is bundled with a generated dynamic TMP/SDF atlas. License and original authorship notices: Samples/Fonts/Licenses/License.txt and AUTHORS.
+Source: https://github.com/liberationfonts/liberation-fonts/releases/tag/2.1.5
+
+FireBall demo effect
+Source: Particle Pack | Starter Assets, Unity Technologies, Asset Store product 127325.
+https://assetstore.unity.com/packages/vfx/particles/particle-pack-starter-assets-127325
+Licensed under the Standard Unity Asset Store EULA: https://unity.com/legal/as-terms
+Unity lists Particle Pack among assets permitted for publisher demonstration content, subject to including only content directly used: https://assetstore.unity.com/lists/free-to-use-assets-for-publisher-demos-243675 (checked 2026-11-03).
+Only the FireBall prefab, its two materials and two textures are bundled under VFX/. The effect is a demo resource and is not licensed as original Layer Aware Bloom artwork or a standalone VFX product. See VFX/README.md.
+
+TextMesh Pro
+Required settings, line-breaking data, default style sheet, SDF shaders and includes are under Samples/ThirdParty/TextMesh Pro. TMP example fonts, presets and sprite assets are excluded. Unity uGUI/TMP licensing is retained in Documentation/Licenses/Unity-uGUI-LICENSE.md and UnityCompanionLicense.html; runtime support is supplied by com.unity.ugui.

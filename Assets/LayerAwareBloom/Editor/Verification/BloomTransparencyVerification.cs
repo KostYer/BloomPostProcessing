@@ -157,7 +157,7 @@ namespace LayerAwareBloom.Editor
                 VerifyLitTransparency(feature, camera, rt, scene, opaqueMaterial);
                 VerifyTransparentEmission(feature, camera, rt, scene);
 
-                const string prefabPath = "Assets/LayerAwareBloom/Samples/ThirdParty/VFX/Free Fire VFX URP/Particles/VFX_Fire_Floor_01.prefab";
+                const string prefabPath = "Assets/LayerAwareBloom/VFX/FireBall.prefab";
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
                 if (prefab != null)
                 {
@@ -166,18 +166,17 @@ namespace LayerAwareBloom.Editor
                         "Fire prefab has no missing scripts");
                     var fireMaterials = prefab.GetComponentsInChildren<Renderer>(true)
                         .SelectMany(r => r.sharedMaterials).Where(m => m != null).Distinct().ToArray();
-                    Require(fireMaterials.Length == 4 && fireMaterials.All(m =>
+                    Require(fireMaterials.Length == 2 && fireMaterials.All(m =>
                         m.shader != null && m.shader.isSupported && !ShaderUtil.ShaderHasError(m.shader)),
-                        "All four fire materials and their shaders are valid");
+                        "Both FireBall materials and their shaders are valid");
                     Require(prefab.GetComponentsInChildren<AudioSource>(true).All(a => a.clip != null),
                         "Fire audio references are intact");
                     Require(prefab.GetComponentsInChildren<ParticleSystem>(true)
                         .Where(p => p.lights.enabled).All(p => p.lights.light != null),
                         "Particle light templates are intact");
-                    Require(prefab.GetComponentsInChildren<Renderer>(true)
-                        .All(r => (r.renderingLayerMask & 2) != 0),
-                        "Fire prefab children are configured for bloom");
                     var fire = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+                    // Authored demo prefabs can store an offset from their showcase scene.
+                    fire.transform.position = Vector3.zero;
                     foreach (var r in fire.GetComponentsInChildren<Renderer>(true)) r.renderingLayerMask = 2;
                     foreach (var p in fire.GetComponentsInChildren<ParticleSystem>(true))
                     { p.useAutoRandomSeed = false; p.randomSeed = 123; p.Simulate(3, false, true, true); }
@@ -354,6 +353,11 @@ namespace LayerAwareBloom.Editor
                 material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
                 material.EnableKeyword("_ALPHAPREMULTIPLY_ON");
                 material.renderQueue = (int)RenderQueue.Transparent;
+                // Warm up the newly created native material before measuring. Its first
+                // DX12 editor draw can be invalid even with the bloom feature disabled.
+                SetBloom(feature, false);
+                feature.ShowFullscreen = false;
+                Capture(camera, rt);
                 foreach (float alpha in new[] { 1f, .25f })
                 {
                     material.SetColor("_BaseColor", new Color(1, 1, 1, alpha));

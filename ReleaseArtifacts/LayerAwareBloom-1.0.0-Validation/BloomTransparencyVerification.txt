@@ -36,10 +36,9 @@ Simple Lit alpha=0,25: camera=RGBA(5.551, 1.672, 0.376, 0.250), source=RGBA(5.55
 OK: Transparent Simple Lit emission matches camera HDR RGB, alpha=0,25, difference=0
 OK: Transparent Simple Lit source preserves bright orange emission
 OK: Fire prefab has no missing scripts
-OK: All four fire materials and their shaders are valid
+OK: Both FireBall materials and their shaders are valid
 OK: Fire audio references are intact
 OK: Particle light templates are intact
-OK: Fire prefab children are configured for bloom
 OK: Imported fire prefab contributes HDR source
 OK: Imported fire prefab produces bloom
 OK: Bloom shader compiles

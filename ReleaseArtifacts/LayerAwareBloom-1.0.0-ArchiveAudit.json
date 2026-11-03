@@ -1,9 +1,9 @@
 {
   "package": "LayerAwareBloom-1.0.0.unitypackage",
-  "created_utc": "2026-11-02T17:19:51.809676+00:00",
-  "bytes": 4333799,
-  "sha256": "b1cceeac2778e3ad4976f828558079e574ce7b1651e1a12b78ddc73a94c1c0a6",
-  "exported_files": 138,
+  "created_utc": "2026-11-03T15:03:25.198320+00:00",
+  "bytes": 4214191,
+  "sha256": "ace4a8dc9d3ff98b76b08fb051814265b5b286b3aaec8d9aebab479f4b5b8a99",
+  "exported_files": 98,
   "source_and_meta_byte_comparison": "PASS",
   "unique_guids": "PASS",
   "excluded_project_settings_and_automation": "PASS",
@@ -19,5 +19,6 @@
   },
   "asset_roots": [
     "LayerAwareBloom"
-  ]
+  ],
+  "documentation_platform_wording_check": "PASS"
 }
