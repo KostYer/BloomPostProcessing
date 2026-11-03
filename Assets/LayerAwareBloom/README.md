@@ -2,7 +2,7 @@
 
 Start with [Quick Start](Documentation/QuickStart.md), [Performance and Quality](Documentation/Performance.md), [Compatibility](Documentation/Compatibility.md), and [Release Preparation](Documentation/ReleasePreparation.md). Changes are listed in [CHANGELOG](CHANGELOG.md).
 
-The release candidate includes all three sample scenes: `Samples/Scenes/GettingStarted.unity`, `BloomGroups.unity`, and `BloomSources.unity`, with their scripts, materials, models, sprites, fonts, Volume Profiles, rendering settings, and referenced fire VFX. Recovery scenes are excluded.
+The release candidate includes all three sample scenes: `Samples/Scenes/GettingStarted.unity`, `BloomGroups.unity`, and `BloomSources.unity`, with their scripts, materials, models, sprites, LiberationSans-Regular SDF, Volume Profiles, rendering settings, and referenced fire VFX. Recovery scenes are excluded.
 
 The exported package includes URP, uGUI, and Input System dependency declarations. Select **Install/Upgrade** if Unity prompts during import; Package Manager handles the required packages and their dependencies. See [Quick Start](Documentation/QuickStart.md) for renderer setup after installation.
 
@@ -24,6 +24,7 @@ LayerAwareBloom/
   Shaders/                 Bloom and UI capture shaders
   Editor/Inspectors/       Custom inspectors and authoring tools
   Editor/Verification/     Explicitly invoked rendering checks
+  VFX/                     Self-contained FireBall prefab, materials, and textures
   Samples/
     Scenes/                GettingStarted, BloomGroups, and BloomSources demos
       Recovery/            Recovered scene snapshots
@@ -35,10 +36,17 @@ LayerAwareBloom/
       Rendering/GettingStarted/  Demo renderer and pipeline
       Volumes/             Scene Volume Profiles
     Shaders/               EmissionOnly demo shader
-    Models/, Sprites/, Fonts/
+    Models/, Sprites/
+    Fonts/
+      LiberationSans-Regular.ttf  Source for dynamic glyph generation
+      Resources/Fonts & Materials/  LiberationSans-Regular SDF (atlas/material embedded)
+      Licenses/             Original Liberation Sans notices
+    ThirdParty/TextMesh Pro/  Required TMP settings, line breaking, style sheet, and SDF shaders
 ```
 
-Project-wide pipeline assets are in `Assets/Settings/Rendering/` (DesktopRenderer, DesktopPipeline, MobileRenderer, MobilePipeline). Volume profiles and input actions are under `Assets/Settings/Volumes/` and `Assets/Settings/Input/`. The imported fire effects are in `Assets/LayerAwareBloom/Samples/ThirdParty/VFX/`. TextMesh Pro's standalone material presets are in `Assets/LayerAwareBloom/Samples/ThirdParty/TextMesh Pro/Resources/Materials/`; its font assets keep their standard Resources paths.
+Project-wide pipeline assets are in `Assets/Settings/Rendering/` (DesktopRenderer, DesktopPipeline, MobileRenderer, MobilePipeline). Volume profiles and input actions are under `Assets/Settings/Volumes/` and `Assets/Settings/Input/`. The imported fire effects are in `Assets/LayerAwareBloom/Samples/ThirdParty/VFX/`. The self-contained FireBall effect is in `Assets/LayerAwareBloom/VFX/`.
+
+The samples and TMP default settings use one font asset: `Samples/Fonts/Resources/Fonts & Materials/LiberationSans-Regular SDF.asset`. Keep its `Samples/Fonts/LiberationSans-Regular.ttf` source because the font generates glyphs dynamically, and retain the notices in `Samples/Fonts/Licenses/`. The font's atlas and material are embedded in its `.asset` file. `Samples/ThirdParty/TextMesh Pro/` contains only the required settings, line-breaking data, default style sheet, SDF shader, mobile fallback shader, and their includes. Arial, extra font weights/styles, the old default/fallback fonts, material presets, and TMP sprite examples are excluded.
 
 Keep each folder's assets grouped by purpose: materials in Materials, scenes in Scenes, scripts and assembly definitions together, and Volume Profiles and pipeline assets in Settings. New scene Volume Profiles are created under the scene collection's `Settings/Volumes/`, outside the Scenes folder.
 
